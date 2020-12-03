@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @create: 2020-11-28 23:31
  */
 public class StatementCreateInterceptor implements InstanceConstructorInterceptor {
-    private AtomicBoolean changed = new AtomicBoolean(false);
     @Override
     public void onConstruct(EnhancedInstance objInst, Object[] allArguments) {
 
@@ -24,16 +23,16 @@ public class StatementCreateInterceptor implements InstanceConstructorIntercepto
         if (!pressureTest) {
             return;
         }
-        if (changed.get()){
-            return;
-        }
+
 
         if (objInst instanceof StatementImpl) {
             // TODO  第二个参数 后期优化 改成连接connection的创建statement方法 去修改 替换反射
             if (allArguments.length != 2) {
                 return;
             }
-            changed.compareAndSet(false, true);
+            if (allArguments!=null && allArguments[1].toString().contains("shadow")) {
+                return;
+            }
             String shadow = "shadow_" + allArguments[1];
             try {
 
