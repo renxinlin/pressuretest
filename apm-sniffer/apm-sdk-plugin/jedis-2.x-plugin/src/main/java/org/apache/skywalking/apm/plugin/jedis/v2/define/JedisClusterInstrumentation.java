@@ -26,6 +26,7 @@ import org.apache.skywalking.apm.agent.core.plugin.interceptor.InstanceMethodsIn
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.ClassInstanceMethodsEnhancePluginDefine;
 import org.apache.skywalking.apm.agent.core.plugin.match.ClassMatch;
 import org.apache.skywalking.apm.plugin.jedis.v2.RedisMethodMatch;
+import redis.clients.jedis.JedisCluster;
 
 import static net.bytebuddy.matcher.ElementMatchers.takesArgument;
 import static org.apache.skywalking.apm.agent.core.plugin.bytebuddy.ArgumentTypeNameMatch.takesArgumentWithType;
@@ -61,7 +62,7 @@ public class JedisClusterInstrumentation extends ClassInstanceMethodsEnhancePlug
             new ConstructorInterceptPoint() {
                 @Override
                 public ElementMatcher<MethodDescription> getConstructorMatcher() {
-                    return takesArgumentWithType(0, ARGUMENT_TYPE_NAME);
+                return takesArgumentWithType(0, ARGUMENT_TYPE_NAME);
                 }
 
                 @Override

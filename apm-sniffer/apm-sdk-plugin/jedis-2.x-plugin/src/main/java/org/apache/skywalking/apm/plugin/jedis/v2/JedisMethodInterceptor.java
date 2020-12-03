@@ -27,12 +27,20 @@ import org.apache.skywalking.apm.agent.core.context.tag.Tags;
 import org.apache.skywalking.apm.agent.core.context.trace.AbstractSpan;
 import org.apache.skywalking.apm.agent.core.context.trace.SpanLayer;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedInstance;
+import org.apache.skywalking.apm.agent.core.pt.StaticRoutingInfo;
 import org.apache.skywalking.apm.network.trace.component.ComponentsDefine;
 import org.apache.skywalking.apm.agent.core.context.ContextManager;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
 import redis.clients.jedis.Jedis;
 
+/**
+ * 压测不支持jedis集群
+ * jedis只能使用一个库
+ * 不支持在业务中中调用select
+ *
+ * 后期全部改造成基于: 前缀key
+ */
 public class JedisMethodInterceptor implements InstanceMethodsAroundInterceptor {
 
     @Override
@@ -42,6 +50,7 @@ public class JedisMethodInterceptor implements InstanceMethodsAroundInterceptor 
         AbstractSpan span = ContextManager.createExitSpan("Jedis/" + method.getName(), peer);
         span.setComponent(ComponentsDefine.JEDIS);
         Tags.DB_TYPE.set(span, "Redis");
+
         SpanLayer.asCache(span);
 
         if (allArguments.length > 0 && allArguments[0] instanceof String) {
@@ -53,14 +62,14 @@ public class JedisMethodInterceptor implements InstanceMethodsAroundInterceptor 
         // 对于 定时任务这种 需要业务方手工处理 开一套影子处理
         TracingContext abstractTracerContext = (TracingContext) ContextManager.get();
         boolean pressureTest = abstractTracerContext.getSegment().isPressureTest();
+        Jedis objInstReal = (Jedis) objInst;
         if(pressureTest) {
-            // todo 需要根据不同的参数判断key处于数组的位置 从而进行处理 目前不处理 参见下个TODO
-            Jedis objInstReal = (Jedis) objInst;
             // 压测数据源
-            long addTwoDB = (objInstReal.getDB() + 1) % 16;
-            objInstReal.select((int)addTwoDB);
-            // 数据也加上偏移 todo 实际使用还是要加上偏移 但是由于redis的操作太多 需要分类处理 这里占时不做分类实现 直接切库
-            // allArguments[0] = "shadow:" + allArguments[0];
+            objInstReal.select(StaticRoutingInfo.ptRedisDb.intValue());
+        }else {
+            // 真实数据源 可能不需要
+            objInstReal.select(StaticRoutingInfo.redisDb.intValue());
+
         }
     }
 
