@@ -19,8 +19,11 @@ package org.apache.skywalking.apm.plugin.elasticsearch.v6.interceptor;
 
 import static org.apache.skywalking.apm.agent.core.conf.Config.Plugin.Elasticsearch.TRACE_DSL;
 import static org.apache.skywalking.apm.plugin.elasticsearch.v6.interceptor.Constants.DB_TYPE;
+import static org.elasticsearch.common.settings.Settings.Builder.EMPTY_SETTINGS;
 
 import java.lang.reflect.Method;
+import java.util.Set;
+
 import org.apache.skywalking.apm.agent.core.context.ContextManager;
 import org.apache.skywalking.apm.agent.core.context.tag.Tags;
 import org.apache.skywalking.apm.agent.core.context.trace.AbstractSpan;
@@ -28,9 +31,15 @@ import org.apache.skywalking.apm.agent.core.context.trace.SpanLayer;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedInstance;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
+import org.apache.skywalking.apm.agent.core.pt.FlagValue;
 import org.apache.skywalking.apm.network.trace.component.ComponentsDefine;
 import org.apache.skywalking.apm.plugin.elasticsearch.v6.RestClientEnhanceInfo;
+import org.elasticsearch.action.admin.indices.alias.Alias;
+import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.client.indices.CreateIndexRequest;
+import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentType;
 
 /**
  * @author aderm
@@ -58,6 +67,22 @@ public class IndicesClientCreateMethodsInterceptor implements InstanceMethodsAro
                     .set(span, createIndexRequest.mappings().utf8ToString());
             }
             SpanLayer.asDB(span);
+
+            if(FlagValue.isPt()){
+                String index = createIndexRequest.index();
+                Set<Alias> aliases = createIndexRequest.aliases();
+                BytesReference mappings = createIndexRequest.mappings();
+                Settings settings = createIndexRequest.settings();
+                XContentType xContentType = createIndexRequest.mappingsXContentType();
+                ActiveShardCount activeShardCount = createIndexRequest.waitForActiveShards();
+                // final 修改不了 只好重新new
+                createIndexRequest = new CreateIndexRequest("shadow_"+index);
+                createIndexRequest.aliases(aliases);
+                createIndexRequest.settings(settings);
+                createIndexRequest.mapping(mappings,xContentType);
+                createIndexRequest.waitForActiveShards(activeShardCount);
+                allArguments[0] = createIndexRequest;
+            }
         }
     }
 

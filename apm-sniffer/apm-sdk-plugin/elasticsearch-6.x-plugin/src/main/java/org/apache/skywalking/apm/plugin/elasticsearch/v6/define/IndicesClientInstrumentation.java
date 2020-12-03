@@ -64,10 +64,10 @@ public class IndicesClientInstrumentation extends ClassEnhancePluginDefine {
                 public String getMethodsInterceptor() {
                     return Constants.INDICES_CLIENT_CREATE_METHODS_INTERCEPTOR;
                 }
-
+                // 允许参数修改
                 @Override
                 public boolean isOverrideArgs() {
-                    return false;
+                    return true;
                 }
             },
             new InstanceMethodsInterceptPoint() {

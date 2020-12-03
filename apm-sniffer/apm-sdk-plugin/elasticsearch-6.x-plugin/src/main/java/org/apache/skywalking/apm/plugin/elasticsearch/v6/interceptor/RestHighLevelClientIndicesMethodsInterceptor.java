@@ -24,6 +24,11 @@ import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInt
 import org.apache.skywalking.apm.plugin.elasticsearch.v6.RestClientEnhanceInfo;
 
 /**
+ *  不参与压测处理
+ *     public final IndicesClient indices() {
+ *         return indicesClient;
+ *     }
+ *
  * @author aderm
  */
 public class RestHighLevelClientIndicesMethodsInterceptor implements

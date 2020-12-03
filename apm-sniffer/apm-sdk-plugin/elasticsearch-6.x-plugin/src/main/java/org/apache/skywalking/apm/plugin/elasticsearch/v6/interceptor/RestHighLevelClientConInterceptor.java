@@ -27,7 +27,7 @@ import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 
-/**
+/** 不参与压测处理
  * @author aderm
  */
 public class RestHighLevelClientConInterceptor implements InstanceConstructorInterceptor {

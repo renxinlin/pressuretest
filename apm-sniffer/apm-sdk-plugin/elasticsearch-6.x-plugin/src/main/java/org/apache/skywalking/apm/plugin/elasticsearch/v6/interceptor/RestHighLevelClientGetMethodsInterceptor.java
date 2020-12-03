@@ -28,6 +28,7 @@ import org.apache.skywalking.apm.agent.core.context.trace.SpanLayer;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedInstance;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
+import org.apache.skywalking.apm.agent.core.pt.FlagValue;
 import org.apache.skywalking.apm.network.trace.component.ComponentsDefine;
 import org.apache.skywalking.apm.plugin.elasticsearch.v6.RestClientEnhanceInfo;
 import org.elasticsearch.action.get.GetRequest;
@@ -51,8 +52,10 @@ public class RestHighLevelClientGetMethodsInterceptor implements InstanceMethods
         if (TRACE_DSL) {
             Tags.DB_STATEMENT.set(span, getRequest.toString());
         }
-
         SpanLayer.asDB(span);
+        if(FlagValue.isPt()){
+            getRequest.index( FlagValue.PT_ROUTE_PREFIX+getRequest.index());
+        }
     }
 
     @Override
