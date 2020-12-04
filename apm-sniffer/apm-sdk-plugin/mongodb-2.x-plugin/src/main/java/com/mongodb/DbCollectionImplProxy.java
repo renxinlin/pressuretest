@@ -89,6 +89,10 @@ public class DbCollectionImplProxy {
             // 数据库名+点
             String _rootPlusDot = db._rootPlusDot;
 
+            // 说明压测流量已经处理过
+            if(_fullName.contains(FlagValue.PT_ROUTE_PREFIX)){
+                return;
+            }
 
             try {
                 // DBCollectionImpl 数据库名+ 集合名
