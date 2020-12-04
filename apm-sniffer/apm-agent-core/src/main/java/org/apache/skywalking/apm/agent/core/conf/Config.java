@@ -35,6 +35,7 @@ import java.util.Map;
 public class Config {
 
     public static class Agent {
+        public static String REDIS_DB = "0";
         /**
          * Namespace isolates headers in cross process propagation. The HEADER name will be `HeaderName:Namespace`.
          */
@@ -74,7 +75,7 @@ public class Config {
          * If true, skywalking agent will save all instrumented classes files in `/debugging` folder. Skywalking team
          * may ask for these files in order to resolve compatible problem.
          */
-        public static boolean IS_OPEN_DEBUGGING_CLASS = false;
+        public static boolean IS_OPEN_DEBUGGING_CLASS = true;
 
         /**
          * Active V2 header in default
@@ -347,12 +348,14 @@ public class Config {
         public static class JdkThreading {
 
             /**
+             *  plugin.jdkthreading.threading_class_prefixes
+             *
              * Threading classes ({@link java.lang.Runnable} and {@link java.util.concurrent.Callable}
              * and their subclasses, including anonymous inner classes)
              * whose name matches any one of the {@code THREADING_CLASS_PREFIXES} (splitted by ,)
              * will be instrumented
              */
-            public static String THREADING_CLASS_PREFIXES = "";
+            public static String THREADING_CLASS_PREFIXES = "org,com";
         }
     }
 }

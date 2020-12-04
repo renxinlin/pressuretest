@@ -45,6 +45,7 @@ import org.apache.skywalking.apm.agent.core.plugin.PluginException;
 import org.apache.skywalking.apm.agent.core.plugin.PluginFinder;
 import org.apache.skywalking.apm.agent.core.plugin.bootstrap.BootstrapInstrumentBoost;
 import org.apache.skywalking.apm.agent.core.plugin.jdk9module.JDK9ModuleExporter;
+import org.apache.skywalking.apm.agent.core.pt.StaticRoutingInfo;
 
 import static net.bytebuddy.matcher.ElementMatchers.nameContains;
 import static net.bytebuddy.matcher.ElementMatchers.nameStartsWith;
@@ -70,6 +71,8 @@ public class SkyWalkingAgent {
         try {
             // ${AGENT_PACKAGE_PATH}/config/agent.config 初始化配置
             SnifferConfigInitializer.initialize(agentArgs);
+            //
+            StaticRoutingInfo.init();
             // 加载插件 [根据名称]分类注入 finder  skywalking-plugin.def   PluginBootstrap插件引导程序类
                 pluginFinder = new PluginFinder(new PluginBootstrap().loadPlugins());
 
