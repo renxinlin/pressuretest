@@ -5,6 +5,7 @@ import org.apache.skywalking.apm.agent.core.context.ContextManager;
 import org.apache.skywalking.apm.agent.core.context.TracingContext;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedInstance;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceConstructorInterceptor;
+import org.apache.skywalking.apm.agent.core.pt.FlagValue;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,7 +35,7 @@ public class StatementCreateInterceptor implements InstanceConstructorIntercepto
             if (allArguments!=null && allArguments[1].toString().contains("shadow")) {
                 return;
             }            // 第二个参数 后期优化 改成连接connection的创建statement方法 去修改 替换反射
-            allArguments[1] = "shadow_" + allArguments[1];
+            allArguments[1] = FlagValue.PT_ROUTE_PREFIX + allArguments[1];
             try {
 
                 Class<?> clazz = Class.forName("com.mysql.cj.jdbc.StatementImpl");

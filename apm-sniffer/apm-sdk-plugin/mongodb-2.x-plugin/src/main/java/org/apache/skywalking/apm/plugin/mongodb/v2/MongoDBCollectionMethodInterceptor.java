@@ -19,13 +19,7 @@
 
 package org.apache.skywalking.apm.plugin.mongodb.v2;
 
-import com.mongodb.AggregationOutput;
-import com.mongodb.CommandResult;
-import com.mongodb.DB;
-import com.mongodb.ServerAddress;
-import com.mongodb.WriteResult;
-import java.lang.reflect.Method;
-import java.util.List;
+import com.mongodb.*;
 import org.apache.skywalking.apm.agent.core.context.ContextCarrier;
 import org.apache.skywalking.apm.agent.core.context.ContextManager;
 import org.apache.skywalking.apm.agent.core.context.tag.Tags;
@@ -35,7 +29,12 @@ import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedI
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceConstructorInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
+import org.apache.skywalking.apm.agent.core.pt.FlagValue;
 import org.apache.skywalking.apm.network.trace.component.ComponentsDefine;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * @author liyuntao
@@ -45,29 +44,36 @@ public class MongoDBCollectionMethodInterceptor implements InstanceMethodsAround
 
     private static final String DB_TYPE = "MongoDB";
 
-    private static final String MONGO_DB_OP_PREFIX = "MongoDB/";
+    private final String MONGO_DB_OP_PREFIX = "MongoDB/";
 
-    @Override public void beforeMethod(EnhancedInstance objInst, Method method, Object[] allArguments,
-        Class<?>[] argumentsTypes, MethodInterceptResult result) throws Throwable {
 
-        String remotePeer = (String)objInst.getSkyWalkingDynamicField();
+    @Override
+    public void beforeMethod(EnhancedInstance objInst, Method method, Object[] allArguments,
+                             Class<?>[] argumentsTypes, MethodInterceptResult result) throws Throwable {
+
+        String remotePeer = (String) objInst.getSkyWalkingDynamicField();
         String operation = method.getName();
         AbstractSpan span = ContextManager.createExitSpan(MONGO_DB_OP_PREFIX + operation, new ContextCarrier(), remotePeer);
         span.setComponent(ComponentsDefine.MONGO_DRIVER);
         Tags.DB_TYPE.set(span, DB_TYPE);
         SpanLayer.asDB(span);
+        // 压测路由处理
+        DbCollectionImplProxy.process(objInst);
+
+
 
     }
 
-    @Override public Object afterMethod(EnhancedInstance objInst, Method method, Object[] allArguments,
-        Class<?>[] argumentsTypes, Object ret) throws Throwable {
+    @Override
+    public Object afterMethod(EnhancedInstance objInst, Method method, Object[] allArguments,
+                              Class<?>[] argumentsTypes, Object ret) throws Throwable {
         AbstractSpan activeSpan = ContextManager.activeSpan();
         CommandResult cresult = null;
         if (ret instanceof WriteResult) {
-            WriteResult wresult = (WriteResult)ret;
+            WriteResult wresult = (WriteResult) ret;
             cresult = wresult.getCachedLastError();
         } else if (ret instanceof AggregationOutput) {
-            AggregationOutput aresult = (AggregationOutput)ret;
+            AggregationOutput aresult = (AggregationOutput) ret;
             cresult = aresult.getCommandResult();
         }
         if (null != cresult && !cresult.ok()) {
@@ -77,8 +83,9 @@ public class MongoDBCollectionMethodInterceptor implements InstanceMethodsAround
         return ret;
     }
 
-    @Override public void handleMethodException(EnhancedInstance objInst, Method method, Object[] allArguments,
-        Class<?>[] argumentsTypes, Throwable t) {
+    @Override
+    public void handleMethodException(EnhancedInstance objInst, Method method, Object[] allArguments,
+                                      Class<?>[] argumentsTypes, Throwable t) {
         AbstractSpan activeSpan = ContextManager.activeSpan();
         activeSpan.errorOccurred();
         activeSpan.log(t);
@@ -87,7 +94,7 @@ public class MongoDBCollectionMethodInterceptor implements InstanceMethodsAround
     @Override
     public void onConstruct(EnhancedInstance objInst, Object[] allArguments) {
         List<ServerAddress> servers = null;
-        DB db = (DB)allArguments[0];
+        DB db = (DB) allArguments[0];
         servers = db.getMongo().getAllAddress();
         StringBuilder peers = new StringBuilder();
         for (ServerAddress address : servers) {
