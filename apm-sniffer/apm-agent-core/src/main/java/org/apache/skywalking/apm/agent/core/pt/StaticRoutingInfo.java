@@ -13,7 +13,7 @@ import org.apache.skywalking.apm.agent.core.conf.Config;
  * lambda: 目前不支持 但是打算支持
  * executors: 目前待测试
  * es: 已经完毕
- * mongodb 待实现
+ * mongodb 支持2.x 3.x ce'shi
  * hbase: 待实现
  * Disruptor： 目前不支持 但是打算支持
  * d

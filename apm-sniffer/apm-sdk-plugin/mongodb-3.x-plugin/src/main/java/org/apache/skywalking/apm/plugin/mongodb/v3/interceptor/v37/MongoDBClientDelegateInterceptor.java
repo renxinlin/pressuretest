@@ -19,15 +19,19 @@
 
 package org.apache.skywalking.apm.plugin.mongodb.v3.interceptor.v37;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.connection.Cluster;
+import com.mongodb.operation.ReadOperation;
 import org.apache.skywalking.apm.agent.core.logging.api.ILog;
 import org.apache.skywalking.apm.agent.core.logging.api.LogManager;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedInstance;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceConstructorInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
+import org.apache.skywalking.apm.agent.core.pt.FlagValue;
 import org.apache.skywalking.apm.plugin.mongodb.v3.support.MongoRemotePeerHelper;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
@@ -50,6 +54,8 @@ public class MongoDBClientDelegateInterceptor implements InstanceConstructorInte
     public void beforeMethod(EnhancedInstance objInst, Method method, Object[] allArguments,
                              Class<?>[] argumentsTypes, MethodInterceptResult result) {
         // do nothing
+        // 无需处理
+
     }
 
     @Override

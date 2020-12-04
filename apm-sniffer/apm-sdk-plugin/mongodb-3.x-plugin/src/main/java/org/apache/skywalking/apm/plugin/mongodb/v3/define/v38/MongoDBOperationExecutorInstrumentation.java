@@ -70,7 +70,8 @@ public class MongoDBOperationExecutorInstrumentation extends ClassInstanceMethod
             public ElementMatcher<MethodDescription> getMethodsMatcher() {
                 return ElementMatchers
                         // 3.8.x~3.11.x
-                        .named(METHOD_NAME).and(ArgumentTypeNameMatch.takesArgumentWithType(2, ARGUMENT_TYPE))
+                        .named(METHOD_NAME)
+                        .and(ArgumentTypeNameMatch.takesArgumentWithType(2, ARGUMENT_TYPE))
                         .or(ElementMatchers.<MethodDescription>named(METHOD_NAME)
                                 .and(ArgumentTypeNameMatch.takesArgumentWithType(3, ARGUMENT_TYPE))
                         );

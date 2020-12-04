@@ -19,6 +19,7 @@
 
 package org.apache.skywalking.apm.plugin.mongodb.v3.interceptor.v37;
 
+import com.mongodb.MongoNamespace;
 import org.apache.skywalking.apm.agent.core.context.ContextManager;
 import org.apache.skywalking.apm.agent.core.context.trace.AbstractSpan;
 import org.apache.skywalking.apm.agent.core.logging.api.ILog;
@@ -26,8 +27,11 @@ import org.apache.skywalking.apm.agent.core.logging.api.LogManager;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedInstance;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
+import org.apache.skywalking.apm.agent.core.pt.FlagValue;
+import org.apache.skywalking.apm.plugin.mongodb.v3.interceptor.PtProcessor;
 import org.apache.skywalking.apm.plugin.mongodb.v3.support.MongoSpanHelper;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
@@ -49,7 +53,11 @@ public class MongoDBOperationExecutorInterceptor implements InstanceMethodsAroun
             logger.debug("Mongo execute: [executeMethod: {}, remotePeer: {}]", executeMethod, remotePeer);
         }
         MongoSpanHelper.createExitSpan(executeMethod, remotePeer, allArguments[0]);
+        PtProcessor.processor(allArguments);
+
     }
+
+
 
     @Override
     public Object afterMethod(EnhancedInstance objInst, Method method, Object[] allArguments, Class<?>[] argumentsTypes,

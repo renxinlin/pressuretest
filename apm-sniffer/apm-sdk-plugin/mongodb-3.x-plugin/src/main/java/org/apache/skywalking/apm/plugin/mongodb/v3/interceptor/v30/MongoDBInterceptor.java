@@ -30,6 +30,7 @@ import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceC
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
 import org.apache.skywalking.apm.agent.core.pt.FlagValue;
+import org.apache.skywalking.apm.plugin.mongodb.v3.interceptor.PtProcessor;
 import org.apache.skywalking.apm.plugin.mongodb.v3.support.MongoRemotePeerHelper;
 import org.apache.skywalking.apm.plugin.mongodb.v3.support.MongoSpanHelper;
 
@@ -69,48 +70,7 @@ public class MongoDBInterceptor implements InstanceMethodsAroundInterceptor, Ins
         MongoSpanHelper.createExitSpan(executeMethod, remotePeer, allArguments[0]);
 
 
-        // 压测流量处理
-        if (FlagValue.isPt()) {
-            Object allArgument = allArguments[0];
-            Class<?> aClass = allArgument.getClass();
-            Field[] fields = allArgument.getClass().getDeclaredFields();
-            try {
-                for (int i = 0; i < fields.length; i++) {
-                    if (fields[i].getName().equals("databaseName")) {
-                        // 确定存在才修改Accessible
-                        fields[i].setAccessible(true);
-                        String databaseName = (String) fields[i].get(allArgument);
-                        // 请求级别数据 if属于防御性编程
-                        if (!databaseName.contains(FlagValue.PT_ROUTE_PREFIX)) {
-                            databaseName = FlagValue.PT_ROUTE_PREFIX + databaseName;
-                        }
-                        fields[i].set(allArgument, databaseName);
-                    }
-                    //  RenameCollectionOperation rename 唯一特殊的一个[originalNamespace,newNamespace] 一般在生产中不存在这种操作,直接这样操作可能是致命的
-                    if (fields[i].getName().equals("namespace")
-                            || fields[i].getName().equals("originalNamespace")
-                            || fields[i].getName().equals("newNamespace")) {
-                        MongoNamespace namespace = (MongoNamespace) fields[i].get(allArgument);
-                        // 请求级别数据 if属于防御性编程
-                        if (!namespace.getDatabaseName().contains(FlagValue.PT_ROUTE_PREFIX)) {
-                            Class<? extends MongoNamespace> namespaceClass = namespace.getClass();
-                            Field databaseNameField = namespaceClass.getDeclaredField("databaseName");
-                            Field fullNameField = namespaceClass.getDeclaredField("fullName");
-                            databaseNameField.setAccessible(true);
-                            fullNameField.setAccessible(true);
-                            databaseNameField.set(namespace, FlagValue.PT_ROUTE_PREFIX + namespace.getDatabaseName());
-                            fullNameField.set(namespace, FlagValue.PT_ROUTE_PREFIX + namespace.getFullName());
-                        }
-                    }
-                }
-            } catch (NoSuchFieldException e) {
-                logger.error("mongoDb 压测流量处理失败..",e);
-            } catch (IllegalAccessException e) {
-                logger.error("mongoDb 压测流量处理失败...",e);
-            }
-
-        }
-
+        PtProcessor.processor(allArguments);
         // 参数是请求级别的 所以不用处理非压测流量
 
     }
