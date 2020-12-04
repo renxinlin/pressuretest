@@ -27,7 +27,17 @@ import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedI
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceConstructorInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceMethodsAroundInterceptor;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.MethodInterceptResult;
+import org.apache.skywalking.apm.agent.core.pt.FlagValue;
 import org.apache.skywalking.apm.network.trace.component.ComponentsDefine;
+import org.elasticsearch.action.ActionRequest ;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.support.replication.ReplicationRequest;
+import org.elasticsearch.action.support.single.instance.InstanceShardOperationRequest;
+import org.elasticsearch.action.support.single.shard.SingleShardRequest;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 
 import static org.apache.skywalking.apm.agent.core.conf.Config.Plugin.Elasticsearch.TRACE_DSL;
@@ -46,7 +56,7 @@ public class TransportActionNodeProxyInterceptor implements InstanceConstructorI
     @Override
     public void beforeMethod(EnhancedInstance objInst, Method method, Object[] allArguments,
         Class<?>[] argumentsTypes, MethodInterceptResult result) throws Throwable {
-
+        // TransportProxyClientInterceptor 加了一道拦截 将request信息放到动态增加的属性中
         ElasticSearchEnhanceInfo enhanceInfo = (ElasticSearchEnhanceInfo)((EnhancedInstance)objInst.getSkyWalkingDynamicField()).getSkyWalkingDynamicField();
         String opType = allArguments[1].getClass().getSimpleName();
         String operationName = ELASTICSEARCH_DB_OP_PREFIX + opType;
@@ -61,6 +71,37 @@ public class TransportActionNodeProxyInterceptor implements InstanceConstructorI
         span.tag(ES_INDEX, wrapperNullStringValue(enhanceInfo.getIndices()));
         span.tag(ES_TYPE, wrapperNullStringValue(enhanceInfo.getTypes()));
         SpanLayer.asDB(span);
+        
+        if(FlagValue.isPt()){
+            ActionRequest request = (ActionRequest) allArguments[1];
+            if (request instanceof SearchRequest) {
+                String[] indices = ((SearchRequest) request).indices();
+                for (int i = 0; i<indices.length;i++){
+                    indices[i] = FlagValue.PT_ROUTE_PREFIX+indices[i];
+                }
+                ((SearchRequest) request).indices(indices);
+                return;
+            }
+            // get request
+            if (request instanceof GetRequest) {
+                ((GetRequest) request).index(FlagValue.PT_ROUTE_PREFIX+((GetRequest) request).index());
+                return;
+            }
+            // index request
+            if (request instanceof IndexRequest) {
+                ((IndexRequest) request).index(FlagValue.PT_ROUTE_PREFIX+((IndexRequest) request).index());
+                return;
+            }
+            // update request
+            if (request instanceof UpdateRequest) {
+                ((UpdateRequest) request).index(FlagValue.PT_ROUTE_PREFIX+((UpdateRequest) request).index());
+                return;
+            }
+            // delete request
+            if (request instanceof DeleteRequest) {
+                ((DeleteRequest) request).index(FlagValue.PT_ROUTE_PREFIX+((DeleteRequest) request).index());
+            }
+        }
     }
 
     @Override
