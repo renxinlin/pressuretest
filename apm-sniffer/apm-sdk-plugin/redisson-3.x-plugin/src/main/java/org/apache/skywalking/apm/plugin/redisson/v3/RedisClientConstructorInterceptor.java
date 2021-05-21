@@ -19,6 +19,8 @@ package org.apache.skywalking.apm.plugin.redisson.v3;
 
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.EnhancedInstance;
 import org.apache.skywalking.apm.agent.core.plugin.interceptor.enhance.InstanceConstructorInterceptor;
+import org.apache.skywalking.apm.agent.core.pt.FlagValue;
+import org.redisson.client.RedisClient;
 
 /**
  * RedisClient is the link between RedisConnection and ConnectionManager.
@@ -30,5 +32,12 @@ public class RedisClientConstructorInterceptor implements InstanceConstructorInt
 
     @Override
     public void onConstruct(EnhancedInstance objInst, Object[] allArguments) {
+        boolean pt = FlagValue.isPt();
+        // 压测数据偏移
+//        if(pt){
+//            RedisClient redisClient = (RedisClient) objInst;
+//            int dbOffset = (redisClient.getConfig().getDatabase() + 1) % 16;
+//            redisClient.getConfig().setDatabase(dbOffset);
+//        }
     }
 }
