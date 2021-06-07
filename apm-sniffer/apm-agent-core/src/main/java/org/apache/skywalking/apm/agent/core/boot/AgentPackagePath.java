@@ -46,6 +46,11 @@ public class AgentPackagePath {
         return AGENT_PACKAGE_PATH != null;
     }
 
+    /**
+     * 根据AgentPackagePath 所在位置定位jar包
+     * @return
+     * @throws AgentPackageNotFoundException
+     */
     private static File findPath() throws AgentPackageNotFoundException {
         String classResourcePath = AgentPackagePath.class.getName().replaceAll("\\.", "/") + ".class";
 
@@ -54,7 +59,7 @@ public class AgentPackagePath {
             String urlString = resource.toString();
 
             logger.debug("The beacon class location is {}.", urlString);
-
+            // jar:file:/mac/skywalking-agent.jar!/org.apache.skywalking.apm.agent.core.boot.AgentPackagePath.class
             int insidePathIndex = urlString.indexOf('!');
             boolean isInJar = insidePathIndex > -1;
 

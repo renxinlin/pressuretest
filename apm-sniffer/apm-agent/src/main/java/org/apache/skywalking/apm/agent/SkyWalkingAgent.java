@@ -60,6 +60,7 @@ public class SkyWalkingAgent {
     private static final ILog logger = LogManager.getLogger(SkyWalkingAgent.class);
 
     /**
+     * -javaagent:/path/to/skywalking-agent/skywalking-agent.jar
      * Main entrance. Use byte-buddy transform to enhance all classes, which define in plugins.
      *
      * @param agentArgs
@@ -74,7 +75,7 @@ public class SkyWalkingAgent {
             //
             StaticRoutingInfo.init();
             // 加载插件 [根据名称]分类注入 finder  skywalking-plugin.def   PluginBootstrap插件引导程序类
-                pluginFinder = new PluginFinder(new PluginBootstrap().loadPlugins());
+            pluginFinder = new PluginFinder(new PluginBootstrap().loadPlugins());
 
         } catch (ConfigNotFoundException ce) {
             logger.error(ce, "SkyWalking agent could not find config. Shutting down.");

@@ -41,8 +41,14 @@ public interface InstanceMethodsInterceptPoint {
 
     /**
      * @return represents a class name, the class instance must instanceof InstanceMethodsAroundInterceptor.
+     * 类似invocationhandler
+     *
      */
     String getMethodsInterceptor();
 
+    /**
+     * 是否覆盖参数  支持mock链路参数
+     * @return
+     */
     boolean isOverrideArgs();
 }

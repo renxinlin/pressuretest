@@ -33,6 +33,10 @@ public class DubboInstrumentation extends ClassInstanceMethodsEnhancePluginDefin
     private static final String ENHANCE_CLASS = "com.alibaba.dubbo.monitor.support.MonitorFilter";
     private static final String INTERCEPT_CLASS = "org.apache.skywalking.apm.plugin.dubbo.DubboInterceptor";
 
+    /**
+     * 被拦截类
+     * @return
+     */
     @Override
     protected ClassMatch enhanceClass() {
         return NameMatch.byName(ENHANCE_CLASS);
@@ -43,10 +47,15 @@ public class DubboInstrumentation extends ClassInstanceMethodsEnhancePluginDefin
         return null;
     }
 
+    /**
+     * 拦截点
+     * @return
+     */
     @Override
     public InstanceMethodsInterceptPoint[] getInstanceMethodsInterceptPoints() {
         return new InstanceMethodsInterceptPoint[] {
             new InstanceMethodsInterceptPoint() {
+
                 @Override
                 public ElementMatcher<MethodDescription> getMethodsMatcher() {
                     return named("invoke");

@@ -60,22 +60,29 @@ public class SnifferConfigInitializer {
             configFileStream = loadConfig();
             Properties properties = new Properties();
             properties.load(configFileStream);
+            // key-value中的value特殊字符转换
             for (String key : properties.stringPropertyNames()) {
                 String value = (String)properties.get(key);
                 //replace the key's value. properties.replace(key,value) in jdk8+
+                // logging.level=${SW_LOGGING_LEVEL:DEBUG}   环境变量没有配置 则配置默认值
                 properties.put(key, PropertyPlaceholderHelper.INSTANCE.replacePlaceholders(value, properties));
             }
+
+            // 将agent.config映射到Config配置中
             ConfigInitializer.initialize(properties, Config.class);
         } catch (Exception e) {
             logger.error(e, "Failed to read the config file, skywalking is going to run in default config.");
         }
 
+
+        // 系统环境变量中取
         try {
             overrideConfigBySystemProp();
         } catch (Exception e) {
             logger.error(e, "Failed to read the system properties.");
         }
 
+        // java agent中传入的值
         if (!StringUtil.isEmpty(agentOptions)) {
             try {
                 agentOptions = agentOptions.trim();
@@ -86,10 +93,11 @@ public class SnifferConfigInitializer {
                 logger.error(e, "Failed to parse the agent options, val is {}.", agentOptions);
             }
         }
-
+        // 必填项
         if (StringUtil.isEmpty(Config.Agent.SERVICE_NAME)) {
             throw new ExceptionInInitializerError("`agent.service_name` is missing.");
         }
+        // 数据存储必填
         if (StringUtil.isEmpty(Config.Collector.BACKEND_SERVICE)) {
             throw new ExceptionInInitializerError("`collector.backend_service` is missing.");
         }
@@ -171,6 +179,7 @@ public class SnifferConfigInitializer {
     }
 
     /**
+     * 加载/config/agent.config
      * Load the specified config file or default config file
      *
      * @return the config file {@link InputStream}, or null if not needEnhance.
@@ -178,6 +187,7 @@ public class SnifferConfigInitializer {
     private static InputStreamReader loadConfig() throws AgentPackageNotFoundException, ConfigNotFoundException, ConfigReadFailedException {
 
         String specifiedConfigPath = System.getProperties().getProperty(SPECIFIED_CONFIG_PATH);
+        // AgentPackagePath.getPath()
         File configFile = StringUtil.isEmpty(specifiedConfigPath) ? new File(AgentPackagePath.getPath(), DEFAULT_CONFIG_FILE_NAME) : new File(specifiedConfigPath);
 
         if (configFile.exists() && configFile.isFile()) {
