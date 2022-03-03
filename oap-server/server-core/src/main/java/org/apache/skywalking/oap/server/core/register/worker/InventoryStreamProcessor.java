@@ -43,13 +43,19 @@ import org.apache.skywalking.oap.server.library.module.ModuleDefineHolder;
 public class InventoryStreamProcessor implements StreamProcessor<RegisterSource> {
 
     private static final InventoryStreamProcessor PROCESSOR = new InventoryStreamProcessor();
-
+    // 每一个work仅处理一个步骤 组合后负责一个数据的处理
     private Map<Class<? extends RegisterSource>, RegisterDistinctWorker> entryWorkers = new HashMap<>();
 
     public static InventoryStreamProcessor getInstance() {
         return PROCESSOR;
     }
 
+    /*
+        完成流式处理
+         1 distinctWorker  服务去重[agent多次重试 或者存在集群多实例]
+         2 remoteWorker    通过remoteSenderService发送远程节点进行处理
+         3 persistentWorker
+     */
     public void in(RegisterSource registerSource) {
         entryWorkers.get(registerSource.getClass()).in(registerSource);
     }
@@ -66,16 +72,26 @@ public class InventoryStreamProcessor implements StreamProcessor<RegisterSource>
         }
 
         IModelSetter modelSetter = moduleDefineHolder.find(CoreModule.NAME).provider().getService(IModelSetter.class);
+        // 添加到StorageModels 之后installer会根据其包含的model以及init模式进行存储层的table创建[es,db等]
         Model model = modelSetter.putIfAbsent(inventoryClass, stream.scopeId(), new Storage(stream.name(), false, false, Downsampling.None), false);
-
+        // 最后一个worker 对请求去重 例如多个服务实例一起进行应用名注册  此外服务注册失败会进行去重
         RegisterPersistentWorker persistentWorker = new RegisterPersistentWorker(moduleDefineHolder, model.getName(), registerDAO, stream.scopeId());
 
         String remoteReceiverWorkerName = stream.name() + "_rec";
         IWorkerInstanceSetter workerInstanceSetter = moduleDefineHolder.find(CoreModule.NAME).provider().getService(IWorkerInstanceSetter.class);
         workerInstanceSetter.put(remoteReceiverWorkerName, persistentWorker, inventoryClass);
+        // 发往其他节点处理
+        /*
+        core:
+          default:
+            # Mixed: Receive agent data, Level 1 aggregate, Level 2 aggregate
+            # Receiver: Receive agent data, Level 1 aggregate
+            # Aggregator: Level 2 aggregate
 
+
+         */
         RegisterRemoteWorker remoteWorker = new RegisterRemoteWorker(moduleDefineHolder, remoteReceiverWorkerName);
-
+        // 第一个worker
         RegisterDistinctWorker distinctWorker = new RegisterDistinctWorker(moduleDefineHolder, remoteWorker);
 
         entryWorkers.put(inventoryClass, distinctWorker);

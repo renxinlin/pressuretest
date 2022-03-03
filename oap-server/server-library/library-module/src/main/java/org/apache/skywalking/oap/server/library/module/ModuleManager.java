@@ -28,6 +28,7 @@ import java.util.*;
 public class ModuleManager implements ModuleDefineHolder {
 
     private boolean isInPrepareStage = true;
+    // 所有启动的模块集合[一个模块对应一个工作的moduleProvider,一个moduleProvider对应多个service]
     private final Map<String, ModuleDefine> loadedModules = new HashMap<>();
 
     /**
@@ -36,9 +37,14 @@ public class ModuleManager implements ModuleDefineHolder {
     public void init(
         ApplicationConfiguration applicationConfiguration) throws ModuleNotFoundException, ProviderNotFoundException, ServiceNotProvidedException, CycleDependencyException, ModuleConfigException, ModuleStartException {
         String[] moduleNames = applicationConfiguration.moduleList();
+        // spi 加载
         ServiceLoader<ModuleDefine> moduleServiceLoader = ServiceLoader.load(ModuleDefine.class);
         ServiceLoader<ModuleProvider> moduleProviderLoader = ServiceLoader.load(ModuleProvider.class);
 
+
+        // yml中配置了相关module   spi中配置了相关module模块
+        // 取两者的交集
+        // 并且根据spi得到的moduleProviderLoader 处理loadedProvider
         LinkedList<String> moduleList = new LinkedList<>(Arrays.asList(moduleNames));
         for (ModuleDefine module : moduleServiceLoader) {
             for (String moduleName : moduleNames) {
@@ -49,7 +55,8 @@ public class ModuleManager implements ModuleDefineHolder {
                     } catch (InstantiationException | IllegalAccessException e) {
                         throw new ModuleNotFoundException(e);
                     }
-                    // 会创建 Module 对应的 ModuleProvider 。
+                    // 会创建 Module 对应的 ModuleProvider 。 注意: yml中一个Module[一级]只能配置一个ModuleProvider[二级] 从而指定spi发现的moduleProvider的特定实例作为实现
+                    // 执行loadedProvider的prepare
                     newInstance.prepare(this, applicationConfiguration.getModuleConfiguration(moduleName), moduleProviderLoader);
                     loadedModules.put(moduleName, newInstance);
                     moduleList.remove(moduleName);
@@ -62,7 +69,7 @@ public class ModuleManager implements ModuleDefineHolder {
         if (moduleList.size() > 0) {
             throw new ModuleNotFoundException(moduleList.toString() + " missing.");
         }
-
+        // 启动引导程序
         BootstrapFlow bootstrapFlow = new BootstrapFlow(loadedModules);
         // 执行 Module 启动逻辑
         bootstrapFlow.start(this);

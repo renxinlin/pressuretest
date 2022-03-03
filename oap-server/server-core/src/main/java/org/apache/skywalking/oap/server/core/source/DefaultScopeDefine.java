@@ -55,6 +55,7 @@ public class DefaultScopeDefine {
     public static final int SERVICE_INSTANCE_JVM_GC = 11;
     public static final int SEGMENT = 12;
     public static final int ALARM = 13;
+    // 模型对应的scope id
     public static final int SERVICE_INVENTORY = 14;
     public static final int SERVICE_INSTANCE_INVENTORY = 15;
     public static final int ENDPOINT_INVENTORY = 16;

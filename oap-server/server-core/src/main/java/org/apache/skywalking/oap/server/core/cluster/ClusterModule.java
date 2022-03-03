@@ -30,7 +30,7 @@ public class ClusterModule extends ModuleDefine {
     public ClusterModule() {
         super(NAME);
     }
-
+    // 服务注册与服务发现
     @Override public Class[] services() {
         return new Class[] {ClusterRegister.class, ClusterNodesQuery.class};
     }

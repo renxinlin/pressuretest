@@ -53,6 +53,7 @@ public class OnSuccessInterceptor implements InstanceMethodsAroundInterceptor {
             Tags.STATUS_CODE.set(activeSpan, sendStatus.name());
         }
         ContextManager.continued(enhanceInfo.getContextSnapshot());
+
     }
 
     @Override

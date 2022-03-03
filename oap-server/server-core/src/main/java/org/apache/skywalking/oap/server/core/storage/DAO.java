@@ -22,6 +22,13 @@ import org.apache.skywalking.oap.server.library.module.Service;
 
 /**
  * @author peng-yongsheng
+ *
+ *
+ * IBatchDAO【批量处理】
+ * IMetricsDAO【增删改查metrics】
+ * IRecordDAO【增删改查record】
+ * IRegisterDAO[增删改查 注册数据]
+ * IRegisterLockDAO【register需要的全局锁功能】
  */
 public interface DAO extends Service {
 }

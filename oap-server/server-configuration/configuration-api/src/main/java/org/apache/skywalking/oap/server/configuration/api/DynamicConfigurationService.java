@@ -23,11 +23,15 @@ import org.apache.skywalking.oap.server.library.module.*;
 /**
  * DynamicConfigurationService provides API to register config change watcher.
  *
+ * 根据底层依赖的配置中心不同 DynamicConfigurationService 包含不同的实现类
+ * 比如Zookeeper,Nacos等 默认NoneConfigurationProvider 内的匿名内部类
  * @author wusheng
  */
 public interface DynamicConfigurationService extends Service {
     /**
      * Register a watcher to the target value
+     * 注册ConfigChangeWatcher监听器
+     *
      *
      * @param watcher to register
      */

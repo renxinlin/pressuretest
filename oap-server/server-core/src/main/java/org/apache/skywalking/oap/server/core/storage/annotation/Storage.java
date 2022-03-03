@@ -25,7 +25,7 @@ import org.apache.skywalking.oap.server.core.analysis.Downsampling;
  */
 @Getter
 public class Storage {
-
+    // 模型的元信息类 表示一个es索引的名称 是否时间序列  是否能删除历史数据  是否开启降采样
     private final String modelName;
     private final boolean capableOfTimeSeries;
     private final boolean deleteHistory;

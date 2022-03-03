@@ -62,8 +62,9 @@ public class JettyServer implements Server {
     @Override
     public void initialize() {
         server = new org.eclipse.jetty.server.Server(new InetSocketAddress(host, port));
-
+        // server对应的handler处理器
         servletContextHandler = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+        // 请求处理的路径
         servletContextHandler.setContextPath(contextPath);
         logger.info("http server root context path: {}", contextPath);
 
@@ -99,7 +100,7 @@ public class JettyServer implements Server {
                     }
                 }
             }
-
+            // 启动服务 接收http请求
             server.start();
         } catch (Exception e) {
             throw new JettyServerException(e.getMessage(), e);

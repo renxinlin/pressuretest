@@ -73,6 +73,7 @@ public class ServiceInventoryCache implements Service {
         Integer serviceId = serviceNameCache.getIfPresent(ServiceInventory.buildId(serviceName));
 
         if (Objects.isNull(serviceId) || serviceId == Const.NONE) {
+            // 缓存不存在则通过存储层查找
             serviceId = getCacheDAO().getServiceId(serviceName);
             if (serviceId != Const.NONE) {
                 serviceNameCache.put(ServiceInventory.buildId(serviceName), serviceId);

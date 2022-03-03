@@ -44,7 +44,9 @@ public class JVMMetricReportServiceHandler extends JVMMetricReportServiceGrpc.JV
         }
 
         request.getMetricsList().forEach(metrics -> {
+            // 根据时间计算出分钟级降采样窗口
             long minuteTimeBucket = TimeBucket.getMinuteTimeBucket(metrics.getTime());
+            //区分cpu 内存池  内存 和 GC
             jvmSourceDispatcher.sendMetric(serviceInstanceId, minuteTimeBucket, metrics);
         });
 

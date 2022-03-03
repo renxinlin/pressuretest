@@ -34,6 +34,9 @@ public class SourceReceiverImpl implements SourceReceiver {
     }
 
     @Override public void receive(Source source) {
+        /*
+                OAL动态生成的调度器，也会在这进行分发
+         */
         dispatcherManager.forward(source);
     }
 

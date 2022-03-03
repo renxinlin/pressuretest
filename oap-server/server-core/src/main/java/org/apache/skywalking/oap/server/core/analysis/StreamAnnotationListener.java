@@ -44,7 +44,8 @@ public class StreamAnnotationListener implements AnnotationListener {
     @Override public void notify(Class aClass) {
         if (aClass.isAnnotationPresent(Stream.class)) {
             Stream stream = (Stream)aClass.getAnnotation(Stream.class);
-
+            // 根据不同元组的Stream标记 创建Storage元信息,并构建Model 将来ModelInstaller 会根据Model信息执行es索引初始化
+            // 构建entryWorkers数据的用于流式处理
             if (stream.processor().equals(InventoryStreamProcessor.class)) {
                 InventoryStreamProcessor.getInstance().create(moduleDefineHolder, stream, aClass);
             } else if (stream.processor().equals(RecordStreamProcessor.class)) {

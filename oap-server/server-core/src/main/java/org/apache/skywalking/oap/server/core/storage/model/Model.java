@@ -29,10 +29,15 @@ import org.apache.skywalking.oap.server.core.analysis.Downsampling;
 public class Model {
 
     private final String name;
+    // 数据是否与时间相关
     private final boolean capableOfTimeSeries;
+    // 设置时间向下采样的代码
     private final Downsampling downsampling;
+    // 是否删除历史数据 是的话ttl或执行清理磁盘工作
     private final boolean deleteHistory;
+    // 字段 以及字段的类型
     private final List<ModelColumn> columns;
+    // 模型的全局唯一id
     private final int scopeId;
     private final boolean record;
 

@@ -72,6 +72,10 @@ public class MetricsStreamProcessor implements StreamProcessor<Metrics> {
         MetricsPersistentWorker hourPersistentWorker = null;
         MetricsPersistentWorker dayPersistentWorker = null;
         MetricsPersistentWorker monthPersistentWorker = null;
+        //  (hourPersistentWorker dayPersistentWorker monthPersistentWorker)\
+        //  transWorker   minutePersistentWorker
+
+        // remoteWorker aggregateWorker
 
         if (configService.shouldToHour()) {
             Model model = modelSetter.putIfAbsent(metricsClass, stream.scopeId(), new Storage(stream.name(), true, true, Downsampling.Hour), false);

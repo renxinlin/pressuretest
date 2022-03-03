@@ -47,22 +47,26 @@ public class AlarmModuleProvider extends ModuleProvider {
     @Override public void prepare() throws ServiceNotProvidedException, ModuleStartException {
         Reader applicationReader;
         try {
+            // 读取告警规则配置
             applicationReader = ResourceUtils.read("alarm-settings.yml");
         } catch (FileNotFoundException e) {
             throw new ModuleStartException("can't load alarm-settings.yml", e);
         }
         RulesReader reader = new RulesReader(applicationReader);
+        // 包含告警规则AlarmRule以及 告警通知地址webhooks【这里通知比较简单,生产中可以支持短信,电话,工作群,邮件,第三方软件等】
         Rules rules = reader.readRules();
-
+        // 监视数据 进行告警
         alarmRulesWatcher = new AlarmRulesWatcher(rules, this);
-
+        // 数据进入告警模块处理的入口
         notifyHandler = new NotifyHandler(alarmRulesWatcher);
+        // 添加告警消息的持久化回调 以及启动异步线程开始工作
         notifyHandler.init(new AlarmStandardPersistence());
         this.registerServiceImplementation(MetricsNotify.class, notifyHandler);
     }
 
     @Override public void start() throws ServiceNotProvidedException, ModuleStartException {
         DynamicConfigurationService dynamicConfigurationService = getManager().find(ConfigurationModule.NAME).provider().getService(DynamicConfigurationService.class);
+        // 注册alarmRulesWatcher到配置中心,alarmRulesWatcher.notify可以看出其支持告警规则的动态修改
         dynamicConfigurationService.registerConfigChangeWatcher(alarmRulesWatcher);
     }
 

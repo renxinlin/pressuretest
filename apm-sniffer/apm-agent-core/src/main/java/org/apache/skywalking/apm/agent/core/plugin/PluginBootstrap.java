@@ -45,7 +45,7 @@ public class PluginBootstrap {
         // PluginBootstrap 对应的上skywalking 类加载器   AgentClassLoader将插件引入 使得类加载器可以找到插件类
         AgentClassLoader.initDefaultLoader();
         PluginResourcesResolver resolver = new PluginResourcesResolver();
-//        获得插件定义路径数组
+//        获得skywalking-plugin.def插件定义路径数组
         List<URL> resources = resolver.getResources();
 
         if (resources == null || resources.size() == 0) {
@@ -81,7 +81,6 @@ public class PluginBootstrap {
         }
         // 所有增强类的插件加载到这里 类似于aop类已经注入容器 这里所有插件即将放入finder
         plugins.addAll(DynamicPluginLoader.INSTANCE.load(AgentClassLoader.getDefault()));
-
         return plugins;
 
     }

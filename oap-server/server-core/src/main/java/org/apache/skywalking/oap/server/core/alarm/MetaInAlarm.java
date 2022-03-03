@@ -39,6 +39,7 @@ public abstract class MetaInAlarm {
     public abstract int getId0();
 
     /**
+     * id1备用只有id0无法鉴别时才会使用id1,目前项目都可以鉴别
      * Only exist in multiple IDs case, Such as ServiceRelation, id1 represents the dest service id
      *
      * @return

@@ -34,6 +34,7 @@ public class ConfigService implements Service {
     public ConfigService(CoreModuleConfig moduleConfig) {
         this.gRPCHost = moduleConfig.getGRPCHost();
         this.gRPCPort = moduleConfig.getGRPCPort();
+        //
         this.dataTTLConfig = moduleConfig.getDataTTL();
     }
 }

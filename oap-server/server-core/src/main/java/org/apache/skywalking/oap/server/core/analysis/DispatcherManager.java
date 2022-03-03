@@ -90,6 +90,7 @@ public class DispatcherManager implements DispatcherDetectorListener {
             Type[] genericInterfaces = aClass.getGenericInterfaces();
             for (Type genericInterface : genericInterfaces) {
                 ParameterizedType anInterface = (ParameterizedType)genericInterface;
+                // 查找SourceDispatcher
                 if (anInterface.getRawType().getTypeName().equals(SourceDispatcher.class.getName())) {
                     Type[] arguments = anInterface.getActualTypeArguments();
 

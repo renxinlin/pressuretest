@@ -68,20 +68,22 @@ public abstract class ModuleDefine implements ModuleProviderHolder {
             if (!configuration.has(provider.name())) {
                 continue;
             }
-
+            // step-1: 设置Module组件对应的loadedProvider实现
+            // module负责抽象定义,loadedProvider负责具象实现
             if (provider.module().equals(getClass())) {
                 if (loadedProvider == null) {
                     loadedProvider = provider;
                     loadedProvider.setManager(moduleManager);
                     loadedProvider.setModuleDefine(this);
                 } else {
+                    // yml中配置的loadedProvider不可以超过一个
                     throw new DuplicateProviderException(this.name() + " module has one " + loadedProvider.name() + "[" + loadedProvider.getClass().getName() + "] provider already, "
                         + provider.name() + "[" + provider.getClass().getName() + "] is defined as 2nd provider.");
                 }
             }
 
         }
-
+        // loadedProvider必须定义
         if (loadedProvider == null) {
             throw new ProviderNotFoundException(this.name() + " module no provider exists.");
         }
@@ -92,6 +94,8 @@ public abstract class ModuleDefine implements ModuleProviderHolder {
         } catch (IllegalAccessException e) {
             throw new ModuleConfigException(this.name() + " module config transport to config bean failure.", e);
         }
+        // 初始化具体的service工作集合
+        // 比如对于存储Storage来说,prepare 初始化与存储服务的client 创建一系列dao实现类用于读写数据
         loadedProvider.prepare();
     }
     

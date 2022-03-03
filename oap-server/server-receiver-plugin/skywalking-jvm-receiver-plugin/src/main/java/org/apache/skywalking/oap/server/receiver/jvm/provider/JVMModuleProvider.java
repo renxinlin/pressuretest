@@ -47,7 +47,9 @@ public class JVMModuleProvider extends ModuleProvider {
 
     @Override public void start() {
         GRPCHandlerRegister grpcHandlerRegister = getManager().find(SharingServerModule.NAME).provider().getService(GRPCHandlerRegister.class);
+        // 旧版本处理器 [client-server交互的]
         grpcHandlerRegister.addHandler(new JVMMetricsServiceHandler(getManager()));
+        // v2版本处理器 [本文分析内容]
         grpcHandlerRegister.addHandler(new JVMMetricReportServiceHandler(getManager()));
     }
 

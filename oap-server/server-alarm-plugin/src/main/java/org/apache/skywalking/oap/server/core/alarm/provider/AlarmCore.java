@@ -49,7 +49,10 @@ public class AlarmCore {
     public List<RunningRule> findRunningRule(String metricsName) {
         return alarmRulesWatcher.getRunningContext().get(metricsName);
     }
-
+    /**
+        每10进行一次检测
+        根据规则配置
+     */
     public void start(List<AlarmCallback> allCallbacks) {
         LocalDateTime now = LocalDateTime.now();
         lastExecuteTime = now;
@@ -57,16 +60,18 @@ public class AlarmCore {
             try {
                 List<AlarmMessage> alarmMessageList = new ArrayList<>(30);
                 LocalDateTime checkTime = LocalDateTime.now();
+                // 计算当前时间与上次检测时间的窗口大小
                 int minutes = Minutes.minutesBetween(lastExecuteTime, checkTime).getMinutes();
                 boolean[] hasExecute = new boolean[] {false};
                 alarmRulesWatcher.getRunningContext().values().forEach(ruleList -> ruleList.forEach(runningRule -> {
-                    if (minutes > 0) {
+                    if (minutes > 0) { // 窗口在同一分钟,不在进行告警
                         runningRule.moveTo(checkTime);
                         /*
                          * Don't run in the first quarter per min, avoid to trigger false alarm.
                          */
-                        if (checkTime.getSecondOfMinute() > 15) {
+                        if (checkTime.getSecondOfMinute() > 15) {// 当前分钟的前15秒避免检测,防止上一分钟数据比例过高误报
                             hasExecute[0] = true;
+                            // 检测所有的应该报警的信息
                             alarmMessageList.addAll(runningRule.check());
                         }
                     }
@@ -75,7 +80,7 @@ public class AlarmCore {
                 if (hasExecute[0]) {
                     lastExecuteTime = checkTime.minusSeconds(checkTime.getSecondOfMinute());
                 }
-
+                // 存在报警信息则执行回调
                 if (alarmMessageList.size() > 0) {
                     allCallbacks.forEach(callback -> callback.doAlarm(alarmMessageList));
                 }

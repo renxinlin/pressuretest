@@ -20,6 +20,13 @@ package org.apache.skywalking.oap.server.core.storage;
 
 /**
  * @author peng-yongsheng
+ * 代表一条数据
+ *
+ *
+ * StorageBuilder map和下述对象的相互转换
+ * Record  trace等数据【AlarmRecord SegmentRecord(服务 以及服务实例 同步数据endpointName以及NetworkAddress) TopNDatabaseStatement】
+ * Metrics 指标数据
+ * RegisterSource 注册数据
  */
 public interface StorageData {
     String id();

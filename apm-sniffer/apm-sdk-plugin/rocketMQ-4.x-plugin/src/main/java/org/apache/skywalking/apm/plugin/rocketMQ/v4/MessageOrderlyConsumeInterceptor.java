@@ -38,7 +38,6 @@ public class MessageOrderlyConsumeInterceptor extends AbstractMessageConsumeInte
     @Override
     public Object afterMethod(EnhancedInstance objInst, Method method, Object[] allArguments, Class<?>[] argumentsTypes,
         Object ret) throws Throwable {
-
         ConsumeOrderlyStatus status = (ConsumeOrderlyStatus)ret;
         if (status == ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT) {
             AbstractSpan activeSpan = ContextManager.activeSpan();

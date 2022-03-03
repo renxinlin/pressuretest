@@ -24,5 +24,6 @@ import org.apache.skywalking.oap.server.library.module.Service;
  * @author peng-yongsheng
  */
 public interface SourceReceiver extends Service {
+
     void receive(Source source);
 }

@@ -15,22 +15,22 @@
 
 rules:
   # Rule unique name, must be ended with `_rule`.
-  endpoint_percent_rule:
-    # Metrics value need to be long, double or int
-    metrics-name: endpoint_percent
-    threshold: 75
-    op: <
-    # The length of time to evaluate the metrics
+  endpoint_percent_rule:  # 一条告警规则的名称
+    # Metrics value need to be long, double or int   |  指标值必须是 long、double 或 int
+    metrics-name: endpoint_percent # 告警的指标名称
+    threshold: 75 # 告警的阈值,也就是值达到什么范围进行告警
+    op: < # 比较的方式
+    # The length of time to evaluate the metrics | 一个时间窗口 则里面有10个样本窗口
     period: 10
     # How many times after the metrics match the condition, will trigger alarm
-    count: 3
+    count: 3 # 一个时间窗口内达到告警阈值几次进行告警
     # How many times of checks, the alarm keeps silence after alarm triggered, default as same as period.
-    silence-period: 10
+    silence-period: 10 # 告警抑制,在触发告警之后的下面一段周期,相同的告警不在触发[防骚扰]
     message: Successful rate of endpoint {name} is lower than 75%
   service_percent_rule:
     metrics-name: service_percent
     # [Optional] Default, match all services in this metrics
-    include-names:
+    include-names: # 规则匹配的应用名称,默认匹配所有的应用
       - service_a
       - service_b
     exclude-names:
@@ -39,6 +39,7 @@ rules:
     op: <
     period: 10
     count: 4
+
 
 webhooks:
   - http://127.0.0.1/notify/

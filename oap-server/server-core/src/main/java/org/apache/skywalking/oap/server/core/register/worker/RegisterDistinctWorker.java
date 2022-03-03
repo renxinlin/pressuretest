@@ -28,6 +28,7 @@ import org.apache.skywalking.oap.server.library.module.ModuleDefineHolder;
 import org.slf4j.*;
 
 /**
+ * 注册去重工作者
  * @author peng-yongsheng
  */
 public class RegisterDistinctWorker extends AbstractWorker<RegisterSource> {
@@ -43,23 +44,30 @@ public class RegisterDistinctWorker extends AbstractWorker<RegisterSource> {
         super(moduleDefineHolder);
         this.nextWorker = nextWorker;
         this.sources = new HashMap<>();
+        // 创建worker自己的缓冲区
         this.dataCarrier = new DataCarrier<>(1, 1000);
+        // 消费池名称
         String name = "REGISTER_L1";
+        // 消费线程数
         int size = BulkConsumePool.Creator.recommendMaxSize() / 8;
         if (size == 0) {
             size = 1;
         }
-        BulkConsumePool.Creator creator = new BulkConsumePool.Creator(name, size, 200);
+        // 消费池
+        BulkConsumePool.Creator creator = new BulkConsumePool.Creator(name, size, 200/*缓冲区无数据则间隔时间200ms*/);
         try {
+            // 第一次创建的时候
             ConsumerPoolFactory.INSTANCE.createIfAbsent(name, creator);
         } catch (Exception e) {
             throw new UnexpectedException(e.getMessage(), e);
         }
+        // dataCarrier 的消费池和消费逻辑
         this.dataCarrier.consume(ConsumerPoolFactory.INSTANCE.get(name), new AggregatorConsumer(this));
     }
 
     @Override public final void in(RegisterSource source) {
         source.resetEndOfBatch();
+        // 写入缓冲区异步消费
         dataCarrier.produce(source);
     }
 
@@ -67,11 +75,13 @@ public class RegisterDistinctWorker extends AbstractWorker<RegisterSource> {
         messageNum++;
 
         if (!sources.containsKey(source)) {
+            // 第一次出现则在加入一道真正处理的缓冲区
             sources.put(source, source);
         } else {
+            // 已经存在则合并
             sources.get(source).combine(source);
         }
-
+        // 消息数量超过1000或者一个批次的数据
         if (messageNum >= 1000 || source.isEndOfBatch()) {
             sources.values().forEach(nextWorker::in);
             sources.clear();

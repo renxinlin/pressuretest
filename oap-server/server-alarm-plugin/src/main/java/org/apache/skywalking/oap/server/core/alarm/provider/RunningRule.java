@@ -18,6 +18,7 @@
 
 package org.apache.skywalking.oap.server.core.alarm.provider;
 
+import com.sun.java.swing.plaf.windows.resources.windows;
 import org.apache.skywalking.oap.server.core.alarm.AlarmMessage;
 import org.apache.skywalking.oap.server.core.alarm.MetaInAlarm;
 import org.apache.skywalking.oap.server.core.analysis.metrics.DoubleValueHolder;
@@ -49,13 +50,14 @@ public class RunningRule {
     private static DateTimeFormatter TIME_BUCKET_FORMATTER = DateTimeFormat.forPattern("yyyyMMddHHmm");
 
     private String ruleName;
-    private int period;
+    private int period; // 窗口大小 单位分钟
     private String metricsName;
-    private final Threshold threshold;
+    private final Threshold threshold; //告警阈值
     private final OP op;
-    private final int countThreshold;
-    private final int silencePeriod;
-    private Map<MetaInAlarm, Window> windows;
+    private final int countThreshold; // 一个时间窗口内达到告警阈值几次进行告警
+    private final int silencePeriod; // 抑制周期
+    // Metrics会
+    private Map<MetaInAlarm /* 指标的一些元信息 */, Window/* 规则配置的时间窗口,内含多个样本窗口 */> windows;
     private volatile MetricsValueType valueType;
     private int targetScopeId;
     private List<String> includeNames;
@@ -146,14 +148,19 @@ public class RunningRule {
 
     /**
      * Check the conditions, decide to whether trigger alarm.
+     * 报警检测
      */
     public List<AlarmMessage> check() {
         List<AlarmMessage> alarmMessageList = new ArrayList<>(30);
 
         windows.entrySet().forEach(entry -> {
+            // 一个指标元信息
             MetaInAlarm meta = entry.getKey();
+            // 一个元信息对应一个窗口
             Window window = entry.getValue();
+            // 窗口内部检测
             AlarmMessage alarmMessage = window.checkAlarm();
+            // 存在告警消息
             if (alarmMessage != AlarmMessage.NONE) {
                 alarmMessage.setScopeId(meta.getScopeId());
                 alarmMessage.setScope(meta.getScope());
@@ -180,11 +187,11 @@ public class RunningRule {
      */
     public class Window {
         private LocalDateTime endTime;
-        private int period;
-        private int counter;
-        private int silenceCountdown;
+        private int period; // 窗口范围 时间单位分钟
+        private int counter;// 每进行一次告警 counter++;
+        private int silenceCountdown; // 配置silence-period 降低到0发生告警则通知,否则抑制防止告警骚扰
 
-        private LinkedList<Metrics> values;
+        private LinkedList<Metrics> values; // 根据period切分的样本窗口,一个元素代表一分钟的统计监控数据聚合值
         private ReentrantLock lock = new ReentrantLock();
 
         public Window(int period) {
@@ -195,6 +202,7 @@ public class RunningRule {
             init();
         }
 
+        // 根据传入的时间和endTime的差值更新values 简单说就是固定窗口随时间滑动
         public void moveTo(LocalDateTime current) {
             lock.lock();
             try {
@@ -202,15 +210,57 @@ public class RunningRule {
                     init();
                     endTime = current;
                 } else {
+
                     int minutes = Minutes.minutesBetween(endTime, current).getMinutes();
                     if (minutes <= 0) {
+                        //       一个value占一分钟
+                        //          values
+
+
+                        // ------|-----------|---------------
+                        //    窗口起点       endtime
+                        //             |
+                        //           current
+                        // 说明endTime无需移动
                         return;
                     }
-                    if (minutes > values.size()) {
-                        // re-init
+                    if (minutes > values.size()) { // 说明现在的窗口太老,新建一批窗口
+
+                        //                                下一个窗口大小
+                        // ------|-----------|------------|---------
+                        //    窗口起点       endtime
+                        //                                      |
+                        //                                  current
+
+                        // 说明values窗口时间太旧
+                        //  // ------ ----------- --|----------|---
+                        //                      新窗口起点        |
+                        //                                   新窗口endtime
+                        //                                       |
+                        //                                   current
+
                         init();
                     } else {
+
+                        //                                下一个窗口大小
+                        // ------|-----------|------------|---------
+                        //    窗口起点       endtime    |
+                        //                             |
+                        //                           current
+                        //
+
+                        // values部分太老
+
+                        //                 === 这部分老窗口未彻底过期 保留
+                        //         ========这部分老窗口数据删除
+                        // --------|-------|--|----------|-----------
+                        //    窗口起点                 endtime
+                        //                             |
+                        //                            current
+
+
                         for (int i = 0; i < minutes; i++) {
+                            // 固定窗口滑动  删除历史的采样  新增现在的采样
                             values.removeFirst();
                             values.addLast(null);
                         }
@@ -222,6 +272,7 @@ public class RunningRule {
             }
         }
 
+        // 将agent上报的指标度量更新到指定的value样本窗口中
         public void add(Metrics metrics) {
             long bucket = metrics.getTimeBucket();
 
@@ -235,7 +286,7 @@ public class RunningRule {
 
             lock.lock();
             try {
-                if (minutes < 0) {
+                if (minutes < 0) { // 当前窗口未来的数据 则需要更新窗口
                     moveTo(timebucket);
                     minutes = 0;
                 }
@@ -245,22 +296,25 @@ public class RunningRule {
                     // also should happen, but maybe if agent/probe mechanism time is not right.
                     return;
                 }
-
+                // 更新数据
                 values.set(values.size() - minutes - 1, metrics);
             } finally {
                 lock.unlock();
             }
         }
 
+        // 根据窗口数据进行检查 返回告警消息
         public AlarmMessage checkAlarm() {
-            if (isMatch()) {
+            // 存在告警匹配
+            if (isMatch()) { // 产生阈值超出
                 /**
                  * When
                  * 1. Metrics value threshold triggers alarm by rule
                  * 2. Counter reaches the count threshold;
                  * 3. Isn't in silence stage, judged by SilenceCountdown(!=0).
                  */
-                counter++;
+                counter++; // 经历多次检测 counter才会满足应告警次数大于countThreshold,才会触发告警通知
+                // 满足告警
                 if (counter >= countThreshold && silenceCountdown < 1) {
                     silenceCountdown = silencePeriod;
 
@@ -268,6 +322,7 @@ public class RunningRule {
                     AlarmMessage message = new AlarmMessage();
                     return message;
                 } else {
+                    // 其他情况减少抑制周期
                     silenceCountdown--;
                 }
             } else {
@@ -352,7 +407,9 @@ public class RunningRule {
 
         private void init() {
             values = new LinkedList();
+            // period 单位为分钟表示窗口的大小
             for (int i = 0; i < period; i++) {
+                // values为一个样本窗口,表示1分钟大小
                 values.add(null);
             }
         }

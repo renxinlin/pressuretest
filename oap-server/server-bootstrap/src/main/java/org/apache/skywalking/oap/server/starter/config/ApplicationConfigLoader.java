@@ -47,7 +47,9 @@ public class ApplicationConfigLoader implements ConfigLoader<ApplicationConfigur
 
     @Override public ApplicationConfiguration load() throws ConfigFileNotFoundException {
         ApplicationConfiguration configuration = new ApplicationConfiguration();
+        // yml转 ModuleConfiguration和ProviderConfiguration
         this.loadConfig(configuration);
+        // 系统环境变量的优先级高于application.yml的优先级
         this.overrideConfigBySystemEnv(configuration);
         return configuration;
     }
@@ -55,15 +57,21 @@ public class ApplicationConfigLoader implements ConfigLoader<ApplicationConfigur
     @SuppressWarnings("unchecked")
     private void loadConfig(ApplicationConfiguration configuration) throws ConfigFileNotFoundException {
         try {
+            // 读取yml资源
             Reader applicationReader = ResourceUtils.read("application.yml");
+            // yml配置转成map森林结构
             Map<String, Map<String, Map<String, ?>>> moduleConfig = yaml.loadAs(applicationReader, Map.class);
+
             if (CollectionUtils.isNotEmpty(moduleConfig)) {
+                // 一级目录对应ModuleConfiguration
                 moduleConfig.forEach((moduleName, providerConfig) -> {
                     if (providerConfig.size() > 0) {
                         logger.info("Get a module define from application.yml, module name: {}", moduleName);
                         ApplicationConfiguration.ModuleConfiguration moduleConfiguration = configuration.addModule(moduleName);
+                        // 二级目录对应ModuleConfiguration 为二级目录构建properties集合 二级目录对应的ProviderConfiguration包含相关的Properties
                         providerConfig.forEach((providerName, propertiesConfig) -> {
                             logger.info("Get a provider define belong to {} module, provider name: {}", moduleName, providerName);
+                            // 构建三级至n级Properties结构
                             Properties properties = new Properties();
                             if (propertiesConfig != null) {
                                 propertiesConfig.forEach((propertyName, propertyValue) -> {
@@ -80,6 +88,7 @@ public class ApplicationConfigLoader implements ConfigLoader<ApplicationConfigur
                                     }
                                 });
                             }
+                            // 为以及配置添加二级配置ProviderConfiguration[包含properties]
                             moduleConfiguration.addProviderConfiguration(providerName, properties);
                         });
                     } else {

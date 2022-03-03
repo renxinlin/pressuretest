@@ -27,5 +27,6 @@ import java.util.List;
  * @author wusheng
  */
 public interface AlarmCallback {
+    // 触发告警后执行告警
     void doAlarm(List<AlarmMessage> alarmMessage);
 }

@@ -57,12 +57,13 @@ public class AnnotationScan {
             Class<?> aClass = classInfo.load();
 
             for (AnnotationListenerCache listener : listeners) {
+                // 判断当前class是否有listener需要关心的注解
                 if (aClass.isAnnotationPresent(listener.annotation())) {
                     listener.addMatch(aClass);
                 }
             }
         }
-
+        // 遍历所有matchedClass执行listener.notify
         listeners.forEach(AnnotationListenerCache::complete);
     }
 

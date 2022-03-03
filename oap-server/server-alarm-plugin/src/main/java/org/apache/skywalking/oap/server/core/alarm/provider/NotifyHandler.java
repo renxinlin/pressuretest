@@ -40,6 +40,8 @@ public class NotifyHandler implements MetricsNotify {
         core = new AlarmCore(alarmRulesWatcher);
     }
 
+    // 检测指标是否告警的入口minutPersistentWorker 执行day month hour三个 PersistentWorker不处理告警
+    // 由MetricsStreamProcessor.AlarmNotifyWorker.AlarmEntrance=>NotifyHandler调用
     @Override public void notify(Metrics metrics) {
         WithMetadata withMetadata = (WithMetadata)metrics;
         MetricsMetaInfo meta = withMetadata.getMeta();
@@ -85,18 +87,20 @@ public class NotifyHandler implements MetricsNotify {
         } else {
             return;
         }
-
+        // 查询指标对应的规则
         List<RunningRule> runningRules = core.findRunningRule(meta.getMetricsName());
         if (runningRules == null) {
             return;
         }
-
+        // 运行时规则添加数据
         runningRules.forEach(rule -> rule.in(metaInAlarm, metrics));
     }
 
     public void init(AlarmCallback... callbacks) {
+        // 回调是一个链表模式 先持久化 在WebhookCallback进行通知
         List<AlarmCallback> allCallbacks = new ArrayList<>(Arrays.asList(callbacks));
-        allCallbacks.add(new WebhookCallback(alarmRulesWatcher));
+        allCallbacks.add(new WebhookCallback(alarmRulesWatcher/* 提供web_hook 地址*/));
+        // 启动异步告警线程每10秒进行一次告警检测
         core.start(allCallbacks);
     }
 

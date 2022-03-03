@@ -32,7 +32,9 @@ import net.bytebuddy.pool.TypePool;
  */
 public enum WitnessClassFinder {
     INSTANCE;
-
+    /**
+     * TypePool 所有被map中的ClassLoader加载的class的类型都在对应的classLoader对应的TypePool里面
+     */
     private Map<ClassLoader, TypePool> poolMap = new HashMap<ClassLoader, TypePool>();
 
     /**

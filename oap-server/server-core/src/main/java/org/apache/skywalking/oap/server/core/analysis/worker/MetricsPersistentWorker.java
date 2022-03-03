@@ -82,6 +82,12 @@ public class MetricsPersistentWorker extends PersistenceWorker<Metrics, MergeDat
         cacheData(metrics);
     }
 
+    /*      mergeDataCache用于批量处理
+            Metrics--> dataCarrier -> METRICS_L2_AGGREGATION[consume] -->mergeDataCache -->prepareBatch
+
+
+     */
+
     @Override public void in(Metrics metrics) {
         dataCarrier.produce(metrics);
     }

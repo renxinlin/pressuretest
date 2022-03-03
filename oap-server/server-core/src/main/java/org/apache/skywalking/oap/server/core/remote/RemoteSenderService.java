@@ -70,6 +70,7 @@ public class RemoteSenderService implements Service {
                 remoteClient = foreverFirstSelector.select(clientList, streamData);
                 break;
         }
+        // 加入remoteClient的getDataCarrier 之后异步发送
         remoteClient.push(nextWorkName, streamData);
     }
 }

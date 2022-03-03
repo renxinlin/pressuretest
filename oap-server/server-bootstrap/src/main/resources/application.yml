@@ -46,8 +46,8 @@ cluster:
 #     etcd cluster nodes, example: 10.0.0.1:2379,10.0.0.2:2379,10.0.0.3:2379
 #    hostPort: ${SW_CLUSTER_ETCD_HOST_PORT:localhost:2379}
 core:
-  default:
-    # Mixed: Receive agent data, Level 1 aggregate, Level 2 aggregate
+  default:     # 构建grpcServer以及jettyServer
+     # Mixed: Receive agent data, Level 1 aggregate[对于注册数据L1指RegisterDistinctWorker处理], Level 2 aggregate[对于注册数据L2指RegisterPersistentWorker]
     # Receiver: Receive agent data, Level 1 aggregate
     # Aggregator: Level 2 aggregate
     role: ${SW_CORE_ROLE:Mixed} # Mixed/Receiver/Aggregator
@@ -132,7 +132,7 @@ storage:
 #      dataSource.prepStmtCacheSqlLimit: ${SW_DATA_SOURCE_PREP_STMT_CACHE_SQL_LIMIT:2048}
 #      dataSource.useServerPrepStmts: ${SW_DATA_SOURCE_USE_SERVER_PREP_STMTS:true}
 #    metadataQueryMaxSize: ${SW_STORAGE_MYSQL_QUERY_MAX_SIZE:5000}
-receiver-sharing-server:
+receiver-sharing-server: # 默认共用core模块的grpcserver和jettyserver
   default:
 receiver-register:
   default:
@@ -174,7 +174,7 @@ query:
   graphql:
     path: ${SW_QUERY_GRAPHQL_PATH:/graphql}
 alarm:
-  default:
+    default:
 telemetry:
   none:
 #  prometheus:

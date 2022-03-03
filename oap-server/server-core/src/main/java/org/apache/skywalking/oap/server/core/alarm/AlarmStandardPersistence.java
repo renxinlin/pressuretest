@@ -46,7 +46,7 @@ public class AlarmStandardPersistence implements AlarmCallback {
             record.setAlarmMessage(message.getAlarmMessage());
             record.setStartTime(message.getStartTime());
             record.setTimeBucket(TimeBucket.getRecordTimeBucket(message.getStartTime()));
-
+            // 将数据存储到alarm_record索引中
             RecordStreamProcessor.getInstance().in(record);
         });
     }

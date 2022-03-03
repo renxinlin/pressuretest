@@ -59,7 +59,19 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 public class SkyWalkingAgent {
     private static final ILog logger = LogManager.getLogger(SkyWalkingAgent.class);
 
+    public static void agentmain(String agentArgs, Instrumentation inst){
+
+    }
+    public static void agentmain(){
+
+    }
+    public static void premain(String agentArgs){
+
+    }
+
     /**
+     *  premain(String agentArgs, Instrumentation instrumentation)
+     *
      * -javaagent:/path/to/skywalking-agent/skywalking-agent.jar
      * Main entrance. Use byte-buddy transform to enhance all classes, which define in plugins.
      *
@@ -72,7 +84,7 @@ public class SkyWalkingAgent {
         try {
             // ${AGENT_PACKAGE_PATH}/config/agent.config 初始化配置
             SnifferConfigInitializer.initialize(agentArgs);
-            //
+            // 非skywalking 官方代码 用于压测redis路由选择
             StaticRoutingInfo.init();
             // 加载插件 [根据名称]分类注入 finder  skywalking-plugin.def   PluginBootstrap插件引导程序类
             pluginFinder = new PluginFinder(new PluginBootstrap().loadPlugins());
@@ -88,6 +100,7 @@ public class SkyWalkingAgent {
             return;
         }
 
+        // 是否保留被代理类到debug目录
         final ByteBuddy byteBuddy = new ByteBuddy()
             .with(TypeValidation.of(Config.Agent.IS_OPEN_DEBUGGING_CLASS));
         // 构建 AgentBuilder 配置ElementMatcher 先忽略一批
@@ -143,6 +156,10 @@ public class SkyWalkingAgent {
         }, "skywalking service shutdown thread"));
     }
 
+
+    /**
+     *
+     */
     private static class Transformer implements AgentBuilder.Transformer {
         private PluginFinder pluginFinder;
 
@@ -152,7 +169,7 @@ public class SkyWalkingAgent {
 
         /**
          *
-         * @param builder
+         * @param builder 字节码探针处理器
          * @param typeDescription 这个就是加载时候对应的源的元信息
          * @param classLoader
          * @param module  这个是java9的特性 java9 我没有研究过不是很清晰
@@ -167,11 +184,12 @@ public class SkyWalkingAgent {
             // 一般type匹配了这里肯定大于0 官方说这是防御编程
             if (pluginDefines.size() > 0) {
                 DynamicType.Builder<?> newBuilder = builder;
+                // 增强上下文
                 EnhanceContext context = new EnhanceContext();
                 for (AbstractClassEnhancePluginDefine define : pluginDefines) {
                     // 通过DynamicType.Builder对象，定义如何拦截需要修改的 Java 类 这里就bytebuddy的 动态agent 构建这的创建交给了插件体系
                     DynamicType.Builder<?> possibleNewBuilder = define.define(typeDescription, newBuilder, classLoader, context);
-                    // 在增强的基础上在增强
+                    // 在增强的基础上在增强  后一个插件是在前一个已经修改的字节码上继续修改
                     if (possibleNewBuilder != null) {
                         newBuilder = possibleNewBuilder;
                     }
@@ -183,6 +201,7 @@ public class SkyWalkingAgent {
 //                DynamicType.Unloaded<?> make = newBuilder.make();
 //                DynamicType.Loaded<?> load = make.load(null);
 //                load.getLoaded().newInstance();
+
                 return newBuilder;
             }
 

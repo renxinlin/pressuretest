@@ -41,6 +41,7 @@ public class ZookeeperConfigurationProvider extends AbstractConfigurationProvide
         return "zookeeper";
     }
 
+    //  yml 对应的Provider中取得相关配置
     @Override
     public ModuleConfig createConfigBeanIfAbsent() {
         return settings;
@@ -56,6 +57,7 @@ public class ZookeeperConfigurationProvider extends AbstractConfigurationProvide
         }
 
         try {
+            // zk的配置信息
             return new ZookeeperConfigWatcherRegister(settings);
         } catch (Exception e) {
             throw new ModuleStartException(e.getMessage(), e);

@@ -33,6 +33,7 @@ public interface IRegisterLockDAO extends DAO {
      *
      * @param scopeId for the id. IDs at different scopes could be same, but unique in same scope.
      * @return Unique ID.
+     *
      */
     int getId(int scopeId, RegisterSource registerSource);
 }

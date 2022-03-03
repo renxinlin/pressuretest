@@ -52,6 +52,7 @@ public class ClusterModuleStandaloneProvider extends ModuleProvider {
     }
 
     @Override public void prepare() throws ServiceNotProvidedException {
+        // 单机管理器
         StandaloneManager standaloneManager = new StandaloneManager();
         this.registerServiceImplementation(ClusterRegister.class, standaloneManager);
         this.registerServiceImplementation(ClusterNodesQuery.class, standaloneManager);

@@ -59,6 +59,7 @@ public class ServiceInventoryRegister implements IServiceInventoryRegister {
         int serviceId = getServiceInventoryCache().getServiceId(serviceName);
 
         if (serviceId == Const.NONE) {
+            // 对应service_inventory索引
             ServiceInventory serviceInventory = new ServiceInventory();
             serviceInventory.setName(serviceName);
             serviceInventory.setAddressId(Const.NONE);
@@ -70,7 +71,7 @@ public class ServiceInventoryRegister implements IServiceInventoryRegister {
             serviceInventory.setMappingServiceId(Const.NONE);
             serviceInventory.setLastUpdateTime(now);
             serviceInventory.setProperties(properties);
-
+            // 不存在异步添加
             InventoryStreamProcessor.getInstance().in(serviceInventory);
         }
         return serviceId;

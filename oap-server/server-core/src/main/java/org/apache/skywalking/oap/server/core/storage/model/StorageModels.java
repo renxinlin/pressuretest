@@ -25,12 +25,16 @@ import org.apache.skywalking.oap.server.core.storage.annotation.*;
 import org.slf4j.*;
 
 /**
+ *
+ * 作为CoreModuleProvider的service prepare阶段被注册到CoreModuleProvider
  * @author peng-yongsheng
  */
 public class StorageModels implements IModelGetter, IModelSetter, IModelOverride {
 
     private static final Logger logger = LoggerFactory.getLogger(StorageModels.class);
-
+    /*
+    包含了所有的模型 通过扫描stream注解添加所有的模型
+     */
     @Getter private final List<Model> models;
 
     public StorageModels() {
@@ -76,7 +80,7 @@ public class StorageModels implements IModelGetter, IModelSetter, IModelOverride
             retrieval(clazz.getSuperclass(), modelName, modelColumns);
         }
     }
-
+    // 修改列名
     @Override public void overrideColumnName(String columnName, String newName) {
         models.forEach(model -> model.getColumns().forEach(column -> {
             ColumnName existColumnName = column.getColumnName();

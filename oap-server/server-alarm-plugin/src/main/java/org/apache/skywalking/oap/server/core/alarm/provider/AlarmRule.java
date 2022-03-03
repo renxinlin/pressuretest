@@ -36,6 +36,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Setter(AccessLevel.PUBLIC)
 @Getter(AccessLevel.PUBLIC)
+// 一条告警规则
 public class AlarmRule {
     private String alarmRuleName;
 

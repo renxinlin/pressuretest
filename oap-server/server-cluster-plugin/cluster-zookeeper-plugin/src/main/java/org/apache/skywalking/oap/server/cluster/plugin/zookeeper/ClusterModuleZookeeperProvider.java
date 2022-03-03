@@ -79,11 +79,11 @@ public class ClusterModuleZookeeperProvider extends ModuleProvider {
 
     @Override public void prepare() throws ServiceNotProvidedException, ModuleStartException {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(config.getBaseSleepTimeMs(), config.getMaxRetries());
-
+        // 构建zk CuratorFrameworkFactory
         CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory.builder()
             .retryPolicy(retryPolicy)
             .connectString(config.getHostPort());
-
+        // 访问控制安全相关
         if (config.isEnableACL()) {
             String authInfo = config.getExpression();
             if ("digest".equals(config.getSchema())) {
@@ -113,27 +113,35 @@ public class ClusterModuleZookeeperProvider extends ModuleProvider {
             builder.aclProvider(provider);
             builder.authorization(config.getSchema(), config.getExpression().getBytes());
         }
+        // zkClient 构建
         client = builder.build();
 
         String path = BASE_PATH + (StringUtil.isEmpty(config.getNameSpace()) ? "" : "/" + config.getNameSpace());
 
+
+        // zk curator-x-discovery模块,该模块支持封装了zk的服务注册发现能力
         serviceDiscovery = ServiceDiscoveryBuilder.builder(RemoteInstance.class).client(client)
             .basePath(path)
             .watchInstances(true)
+                // SWInstanceSerializer 将数据序列化成json
             .serializer(new SWInstanceSerializer()).build();
 
+        // 提供zk节点注册和集群信息读取
         ZookeeperCoordinator coordinator;
         try {
             client.start();
+            // 阻塞下 等待连接成功
             client.blockUntilConnected();
             serviceDiscovery.start();
+            // 构建服务注册发现对象封装zk 提供服务注册和服务发现能力
             coordinator = new ZookeeperCoordinator(config, serviceDiscovery);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             throw new ModuleStartException(e.getMessage(), e);
         }
-
+        // 通过coordinator对集群的信息进行注册,注册数据维护在zk
         this.registerServiceImplementation(ClusterRegister.class, coordinator);
+        // 通过coordinator对集群的信息进行查询
         this.registerServiceImplementation(ClusterNodesQuery.class, coordinator);
     }
 

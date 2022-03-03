@@ -40,9 +40,10 @@ public abstract class ModelInstaller {
 
     public final void install(Client client) throws StorageException {
         IModelGetter modelGetter = moduleManager.find(CoreModule.NAME).provider().getService(IModelGetter.class);
-
+        // 获取es索引映射对象
         List<Model> models = modelGetter.getModels();
 
+        // no-init 不会创建表 es索引等
         if (RunningMode.isNoInitMode()) {
             for (Model model : models) {
                 while (!isExists(client, model)) {
@@ -55,6 +56,7 @@ public abstract class ModelInstaller {
                 }
             }
         } else {
+            // init 索引不存在在创建索引
             for (Model model : models) {
                 if (!isExists(client, model)) {
                     logger.info("table: {} does not exist", model.getName());

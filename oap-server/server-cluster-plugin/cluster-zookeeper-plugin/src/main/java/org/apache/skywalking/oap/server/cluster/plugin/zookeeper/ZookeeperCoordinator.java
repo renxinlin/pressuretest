@@ -35,7 +35,9 @@ public class ZookeeperCoordinator implements ClusterRegister, ClusterNodesQuery 
     private static final String REMOTE_NAME_PATH = "remote";
 
     private final ClusterModuleZookeeperConfig config;
+    // zk工具包curator-x-discovery模块 服务发现工具
     private final ServiceDiscovery<RemoteInstance> serviceDiscovery;
+    // zk工具包curator-x-discovery模块 服务发现结果缓存
     private final ServiceCache<RemoteInstance> serviceCache;
     private volatile Address selfAddress;
 
@@ -43,6 +45,7 @@ public class ZookeeperCoordinator implements ClusterRegister, ClusterNodesQuery 
         this.config = config;
         this.serviceDiscovery = serviceDiscovery;
         this.serviceCache = serviceDiscovery.serviceCacheBuilder().name(REMOTE_NAME_PATH).build();
+        // 首次拉取zk上监听的数据 并开启listen机制监听zk数据
         this.serviceCache.start();
     }
 
@@ -59,7 +62,7 @@ public class ZookeeperCoordinator implements ClusterRegister, ClusterNodesQuery 
                 .port(remoteInstance.getAddress().getPort())
                 .payload(remoteInstance)
                 .build();
-
+            // 向zk注册数据
             serviceDiscovery.registerService(thisInstance);
 
             this.selfAddress = remoteInstance.getAddress();
@@ -71,6 +74,7 @@ public class ZookeeperCoordinator implements ClusterRegister, ClusterNodesQuery 
 
     @Override public List<RemoteInstance> queryRemoteNodes() {
         List<RemoteInstance> remoteInstanceDetails = new ArrayList<>(20);
+        // 从缓存中获取zk上注册的集群机器集合
         List<ServiceInstance<RemoteInstance>> serviceInstances = serviceCache.getInstances();
         serviceInstances.forEach(serviceInstance -> {
             RemoteInstance instance = serviceInstance.getPayload();

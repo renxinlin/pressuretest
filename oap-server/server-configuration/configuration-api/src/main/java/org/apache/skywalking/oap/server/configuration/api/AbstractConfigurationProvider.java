@@ -27,6 +27,7 @@ import org.apache.skywalking.oap.server.library.module.*;
  * @author wusheng
  */
 public abstract class AbstractConfigurationProvider extends ModuleProvider {
+    // 注册该服务configWatcherRegister,该服务负责扫描ConfigChangeWatcher变更,并调用其notify方法
     private ConfigWatcherRegister configWatcherRegister;
 
     @Override public Class<? extends ModuleDefine> module() {
@@ -34,7 +35,9 @@ public abstract class AbstractConfigurationProvider extends ModuleProvider {
     }
 
     @Override public void prepare() throws ServiceNotProvidedException, ModuleStartException {
+        // 初始化配置注册器[负责定时拉取不同中间件的配置 调用watcher监听器更新配置]
         configWatcherRegister = initConfigReader();
+        // 注册配置注册器
         this.registerServiceImplementation(DynamicConfigurationService.class, configWatcherRegister);
     }
 

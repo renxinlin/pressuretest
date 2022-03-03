@@ -38,7 +38,7 @@ class BootstrapFlow {
     BootstrapFlow(Map<String, ModuleDefine> loadedModules) throws CycleDependencyException {
         this.loadedModules = loadedModules;
         startupSequence = new LinkedList<>();
-
+        // 初始化startupSequence 中的所有ModuleProvider
         makeSequence();
     }
 
@@ -46,6 +46,8 @@ class BootstrapFlow {
     void start(
         ModuleManager moduleManager) throws ModuleNotFoundException, ServiceNotProvidedException, ModuleStartException {
         for (ModuleProvider provider : startupSequence) {
+            // 当前ModuleProvider对应的Module依赖的其他module
+            // 比如存储模块StorageModule的其中一个实现StorageModuleElasticsearch7Provider依赖核心模块CoreModule.NAME
             String[] requiredModules = provider.requiredModules();
             if (requiredModules != null) {
                 for (String module : requiredModules) {
@@ -56,8 +58,13 @@ class BootstrapFlow {
                 }
             }
             logger.info("start the provider {} in {} module.", provider.name(), provider.getModuleName());
-            provider.requiredCheck(provider.getModule().services());
+            // 检查所有需要的service是不是存在 Module不同的provider有不同的services实现
+            // module负责定义功能,services方法指定了一系列service接口
+            // 则module的实现provider需要实现该系列的service 通过requiredCheck检查service是否全部实现
 
+            // 一般我们在provider.prepare时通过registerServiceImplementation注册serviceImpl
+            provider.requiredCheck(provider.getModule().services());
+            // 启动provider 比如es7存储实现则创建esClient 并且根据init模式决定是否在es上初始化索引
             provider.start();
         }
     }

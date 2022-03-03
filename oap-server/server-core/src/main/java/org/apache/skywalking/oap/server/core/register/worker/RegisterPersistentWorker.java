@@ -101,6 +101,7 @@ public class RegisterPersistentWorker extends AbstractWorker<RegisterSource> {
                             }
                         } else {
                             int sequence;
+                            // 返回一个自增id 为一个全局锁功能 确保创建流程的独占性 [乐观锁更新失败返回Const.NONE]
                             if ((sequence = registerLockDAO.getId(scopeId, source)) != Const.NONE) {
                                 try {
                                     dbSource = registerDAO.get(modelName, source.id());

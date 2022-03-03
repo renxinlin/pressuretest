@@ -43,7 +43,7 @@ public abstract class AbstractClassEnhancePluginDefine {
      * Main entrance of enhancing the class.
      *
      * @param typeDescription target class description.
-     * @param builder         byte-buddy's builder to manipulate target class's bytecode.
+     * @param builder         byte-buddy's builder to manipulate target class's bytecode. 可以操作字节码
      * @param classLoader     load the given transformClass
      * @return the new builder, or <code>null</code> if not be enhanced.
      * @throws PluginException when set builder failure.
@@ -63,11 +63,13 @@ public abstract class AbstractClassEnhancePluginDefine {
 
         /**
          * find witness classes for enhance class
+         * 如果见证者不存在 则不进行增强
          */
         // 见证者 对框架不同版本的处理方式
         String[] witnessClasses = witnessClasses();
         if (witnessClasses != null) {
             for (String witnessClass : witnessClasses) {
+                // 通过classloader对应的类型池判断见证者类在不在
                 if (!WitnessClassFinder.INSTANCE.exist(witnessClass, classLoader)) {
                     logger.warn("enhance class {} by plugin {} is not working. Because witness class {} is not existed.", transformClassName, interceptorDefineClassName,
                             witnessClass);

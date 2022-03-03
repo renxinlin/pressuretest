@@ -53,13 +53,14 @@ public enum DataTTLKeeperTimer {
     public void start(ModuleManager moduleManager, CoreModuleConfig moduleConfig) {
         this.moduleManager = moduleManager;
         this.clusterNodesQuery = moduleManager.find(ClusterModule.NAME).provider().getService(ClusterNodesQuery.class);
-
+        // 5分钟清理时序数据
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
             new RunnableWithExceptionProtection(this::delete, t -> logger.error("Remove data in background failure.", t)),
             moduleConfig.getDataKeeperExecutePeriod(), moduleConfig.getDataKeeperExecutePeriod(), TimeUnit.MINUTES);
     }
 
     private void delete() {
+        // 获取oap中的所有节点的第一个节点 执行清理
         List<RemoteInstance> remoteInstances = clusterNodesQuery.queryRemoteNodes();
         if (CollectionUtils.isNotEmpty(remoteInstances) && !remoteInstances.get(0).getAddress().isSelf()) {
             logger.info("The selected first getAddress is {}. Skip.", remoteInstances.get(0).toString());
@@ -67,6 +68,7 @@ public enum DataTTLKeeperTimer {
         }
 
         logger.info("Beginning to remove expired metrics from the storage.");
+        //  从IModelGetter中获取全部模型
         IModelGetter modelGetter = moduleManager.find(CoreModule.NAME).provider().getService(IModelGetter.class);
         List<Model> models = modelGetter.getModels();
         models.forEach(model -> {

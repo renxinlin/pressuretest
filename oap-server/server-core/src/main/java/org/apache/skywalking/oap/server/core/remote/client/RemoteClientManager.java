@@ -58,6 +58,7 @@ public class RemoteClientManager implements Service {
 
     private final ModuleDefineHolder moduleDefineHolder;
     private ClusterNodesQuery clusterNodesQuery;
+    // oap集群列表 mixed
     private volatile List<RemoteClient> usingClients;
     private GaugeMetrics gauge;
     private int remoteTimeout;
@@ -75,6 +76,7 @@ public class RemoteClientManager implements Service {
     }
 
     public void start() {
+        // 每隔5秒更新集群信息
         Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(this::refresh, 1, 5, TimeUnit.SECONDS);
     }
 

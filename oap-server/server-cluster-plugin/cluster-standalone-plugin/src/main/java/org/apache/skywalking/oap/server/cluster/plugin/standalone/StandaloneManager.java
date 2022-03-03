@@ -32,6 +32,7 @@ public class StandaloneManager implements ClusterNodesQuery, ClusterRegister {
     private volatile RemoteInstance remoteInstance;
 
     @Override public void registerRemote(RemoteInstance remoteInstance) {
+        // core模块启动时注册自己 因为是Standalone模式,信息维护在内存即可
         this.remoteInstance = remoteInstance;
         this.remoteInstance.getAddress().setSelf(true);
         TelemetryRelatedContext.INSTANCE.setId("standalone");

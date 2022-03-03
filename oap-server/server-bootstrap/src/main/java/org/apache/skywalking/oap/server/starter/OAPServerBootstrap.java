@@ -38,21 +38,43 @@ public class OAPServerBootstrap {
 
     public static void start() {
         String mode = System.getProperty("mode");
+        // init 或者 no-init 表示是否初始化[example: 底层存储组件等]
         RunningMode.setMode(mode);
 
+        /*
+        初始化ApplicationConfiguration 通过ApplicationConfiguration加载ApplicationConfiguration
+         */
         ApplicationConfigLoader configLoader = new ApplicationConfigLoader();
         ModuleManager manager = new ModuleManager();
         try {
-            // 加载配置
+
+            /*
+                                一个ApplicationConfiguration有多个ModuleConfiguration
+                                一个ModuleConfiguration有多个ProviderConfiguration
+
+                                Module对应模块,比如存储模块  集群模块,服务网格模块等等
+                                Provider对应模块的实现集合,模块最终会选择且仅选择一个提供者作为模块实现
+
+
+                                                                    ApplicationConfiguration
+
+                 ModuleConfiguration                                   ModuleConfiguration                               ModuleConfiguration
+                      /\                                                     /\                                                    /\
+ ProviderConfiguration  ProviderConfiguration           ProviderConfiguration  ProviderConfiguration          ProviderConfiguration  ProviderConfiguration
+
+             */
+            // 加载yml生成ApplicationConfiguration配置
             ApplicationConfiguration applicationConfiguration = configLoader.load();
-            // 初始化组件
+            // 初始化模块
             /**
              * spi
              * org.apache.skywalking.oap.server.library.module.ModuleDefine
              * org.apache.skywalking.oap.server.library.module.ModuleProvider
              */
             manager.init(applicationConfiguration);
-
+            // 根据模块名获取模块,根据模块或者loadedProvider,根据Provider获取内部service集合中的MetricsCreator
+            // 模块有多个provider,有且仅有一个作为loadedProvider工作
+            // Provider由多个service提供工作
             manager.find(TelemetryModule.NAME).provider().getService(MetricsCreator.class).createGauge("uptime",
                 "oap server start up time", MetricsTag.EMPTY_KEY, MetricsTag.EMPTY_VALUE)
                 // Set uptime to second

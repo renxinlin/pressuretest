@@ -40,7 +40,9 @@ public class NoneConfigurationProvider extends ModuleProvider {
 
     @Override public void prepare() throws ServiceNotProvidedException, ModuleStartException {
         this.registerServiceImplementation(DynamicConfigurationService.class, new DynamicConfigurationService() {
+            // 也没有定时扫描
             @Override public void registerConfigChangeWatcher(ConfigChangeWatcher watcher) {
+                // 配置module的NoneConfigurationProvider 无需监听数据的变更
 
             }
         });

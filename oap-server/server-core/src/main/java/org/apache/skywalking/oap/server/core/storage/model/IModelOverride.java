@@ -26,5 +26,8 @@ import org.apache.skywalking.oap.server.library.module.Service;
  * @author wusheng
  */
 public interface IModelOverride extends Service {
+    /*
+       列名与数据库关键字冲突 则通过该方法修改列名
+     */
     void overrideColumnName(String columnName, String newName);
 }

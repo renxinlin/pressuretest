@@ -31,6 +31,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ *
+ *
+ *
+ *           规则
+ *   数据  ----check----通知
  * Alarm rules' settings can be dynamically updated via configuration center(s),
  * this class is responsible for monitoring the configuration and parsing them
  * into {@link Rules} and {@link #runningContext}.
@@ -40,8 +45,8 @@ import java.util.Map;
  */
 public class AlarmRulesWatcher extends ConfigChangeWatcher {
     @Getter
-    private volatile Map<String, List<RunningRule>> runningContext;
-    private volatile Map<AlarmRule, RunningRule> alarmRuleRunningRuleMap;
+    private volatile Map<String /*指标名称*/, List<RunningRule> /* 一个指标可能会有多个规则配置 */> runningContext;
+    private volatile Map<AlarmRule/* 静态配置的告警规则 */, RunningRule/* 除去静态的配置 含包括运行时指标上报时的窗口数据 */> alarmRuleRunningRuleMap;
     private volatile Rules rules;
     private volatile String settingsString;
 
@@ -67,6 +72,10 @@ public class AlarmRulesWatcher extends ConfigChangeWatcher {
         }
     }
 
+    /*
+        读取alarm-settings.yml会触发规则信息的重载
+        配置中心变化也会触发规则信息的重载
+     */
     void notify(Rules newRules) {
         Map<AlarmRule, RunningRule> newAlarmRuleRunningRuleMap = new HashMap<>();
         Map<String, List<RunningRule>> newRunningContext = new HashMap<>();
@@ -77,9 +86,9 @@ public class AlarmRulesWatcher extends ConfigChangeWatcher {
              * corresponding runningRule, to keep its history metrics
              */
             RunningRule runningRule = alarmRuleRunningRuleMap.getOrDefault(rule, new RunningRule(rule));
-
+            // 每一个AlarmRule对应一个RunningRule
             newAlarmRuleRunningRuleMap.put(rule, runningRule);
-
+            // 多个AlarmRule 可能有同一个metricsName
             String metricsName = rule.getMetricsName();
 
             List<RunningRule> runningRules = newRunningContext.computeIfAbsent(metricsName, key -> new ArrayList<>());

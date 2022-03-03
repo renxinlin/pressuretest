@@ -32,7 +32,7 @@ import org.slf4j.*;
 public abstract class ConfigWatcherRegister implements DynamicConfigurationService {
     private static final Logger logger = LoggerFactory.getLogger(ConfigWatcherRegister.class);
     public static final String LINE_SEPARATOR = System.getProperty("line.separator", "\n");
-
+    // 包含相关的ConfigChangeWatcher
     private Register register = new Register();
     private volatile boolean isStarted = false;
     private final long syncPeriod;
@@ -62,22 +62,27 @@ public abstract class ConfigWatcherRegister implements DynamicConfigurationServi
 
         configSync();
         logger.info("Current configurations after the bootstrap sync." + LINE_SEPARATOR + register.toString());
-
+        // 每60秒执行一次调度
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
             new RunnableWithExceptionProtection(this::configSync,
                 t -> logger.error("Sync config center error.", t)), syncPeriod, syncPeriod, TimeUnit.SECONDS);
     }
 
+    // 定时同步远程配置的数据
     void configSync() {
+        // 读取配置
         ConfigTable configTable = readConfig(register.keys());
 
         configTable.getItems().forEach(item -> {
             String itemName = item.getName();
+            // 其他模块注册的ConfigChangeWatcher
             WatcherHolder holder = register.get(itemName);
             if (holder != null) {
                 ConfigChangeWatcher watcher = holder.getWatcher();
                 String newItemValue = item.getValue();
+                // 配置变更
                 if (newItemValue == null) {
+                    // 触发ConfigChangeWatcher监听
                     if (watcher.value() != null) {
                         // Notify watcher, the new value is null with delete event type.
                         watcher.notify(new ConfigChangeWatcher.ConfigChangeEvent(null, ConfigChangeWatcher.EventType.DELETE));
@@ -99,10 +104,11 @@ public abstract class ConfigWatcherRegister implements DynamicConfigurationServi
         logger.trace("Current configurations after the sync." + LINE_SEPARATOR + register.toString());
     }
 
+    // 读取远程配置的信息
     public abstract ConfigTable readConfig(Set<String> keys);
 
     public class Register {
-        private Map<String, WatcherHolder> register = new HashMap<>();
+        private Map<String /* ConfigChangeWatcher 名称 */, WatcherHolder /* ConfigChangeWatcher holder */> register = new HashMap<>();
 
         private boolean containsKey(String key) {
             return register.containsKey(key);

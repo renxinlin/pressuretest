@@ -44,6 +44,7 @@ public class RegisterRemoteWorker extends AbstractWorker<RegisterSource> {
 
     @Override public final void in(RegisterSource registerSource) {
         try {
+            // 发送策略默认永远第一个节点处理
             remoteSender.send(remoteReceiverWorkerName, registerSource, Selector.ForeverFirst);
         } catch (Throwable e) {
             logger.error(e.getMessage(), e);
